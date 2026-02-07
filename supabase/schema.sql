@@ -48,12 +48,12 @@ drop policy if exists "models_insert_authenticated" on public.models;
 drop policy if exists "models_update_authenticated" on public.models;
 drop policy if exists "models_delete_authenticated" on public.models;
 
--- Everyone signed in can view all models
+-- User-scoped access: each authenticated user sees and edits only own rows
 create policy "models_select_authenticated"
 on public.models
 for select
 to authenticated
-using (true);
+using ((select auth.uid()) = created_by);
 
 -- Insert only as self
 create policy "models_insert_authenticated"
@@ -67,14 +67,14 @@ create policy "models_update_authenticated"
 on public.models
 for update
 to authenticated
-using (true)
-with check (true);
+using ((select auth.uid()) = created_by)
+with check ((select auth.uid()) = created_by);
 
 create policy "models_delete_authenticated"
 on public.models
 for delete
 to authenticated
-using (true);
+using ((select auth.uid()) = created_by);
 
 -- Realtime support
 alter table public.models replica identity full;
@@ -100,23 +100,38 @@ create policy "model_images_public_read"
 on storage.objects
 for select
 to public
-using (bucket_id = 'model-images');
+using (
+  bucket_id = 'model-images'
+  and split_part(name, '/', 1) = (select auth.uid())::text
+);
 
 create policy "model_images_auth_insert"
 on storage.objects
 for insert
 to authenticated
-with check (bucket_id = 'model-images');
+with check (
+  bucket_id = 'model-images'
+  and split_part(name, '/', 1) = (select auth.uid())::text
+);
 
 create policy "model_images_auth_update"
 on storage.objects
 for update
 to authenticated
-using (bucket_id = 'model-images')
-with check (bucket_id = 'model-images');
+using (
+  bucket_id = 'model-images'
+  and split_part(name, '/', 1) = (select auth.uid())::text
+)
+with check (
+  bucket_id = 'model-images'
+  and split_part(name, '/', 1) = (select auth.uid())::text
+);
 
 create policy "model_images_auth_delete"
 on storage.objects
 for delete
 to authenticated
-using (bucket_id = 'model-images');
+using (
+  bucket_id = 'model-images'
+  and split_part(name, '/', 1) = (select auth.uid())::text
+);

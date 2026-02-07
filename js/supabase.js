@@ -60,6 +60,7 @@ async function fetchModelsFromCloud() {
   const { data, error } = await cloudClient
     .from(CLOUD.TABLE)
     .select('id,name,year,code,image_file,source_link,created_by,updated_at')
+    .eq('created_by', cloudUser.id)
     .order('code', { ascending: true });
 
   if (error) throw error;

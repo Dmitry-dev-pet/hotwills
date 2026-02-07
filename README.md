@@ -110,8 +110,7 @@ If variables are not set, deploy still works but uses committed `config.js`.
 
 ## Multiuser model
 
-- All authenticated users can read all rows.
-- Any authenticated user can update/delete rows (collaborative mode).
+- Each authenticated user can read only own rows (`created_by = auth.uid()`).
+- Each authenticated user can update/delete only own rows.
 - New rows are inserted with `created_by = auth.uid()`.
-
-If you need strict ownership (user edits only own rows), adjust policies in `/Users/dmitry/Project/hotwills/supabase/schema.sql`.
+- Storage object keys are user-scoped (`<auth.uid()>/...`).
