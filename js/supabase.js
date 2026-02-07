@@ -179,9 +179,13 @@ function setAuthUi() {
   if (!signInBtn || !signOutBtn || !userEl) return;
 
   userEl.textContent = cloudUser ? (cloudUser.email || cloudUser.id) : t('anonymous');
-  signOutBtn.disabled = !cloudUser;
+  signOutBtn.disabled = false;
 
   signInBtn.onclick = async () => {
+    if (!cloudClient) {
+      cloudStatus(t('authConfigMissing'), true);
+      return;
+    }
     const redirectTo = `${location.origin}${location.pathname}`;
     const { error } = await cloudClient.auth.signInWithOAuth({
       provider: 'google',
@@ -191,6 +195,14 @@ function setAuthUi() {
   };
 
   signOutBtn.onclick = async () => {
+    if (!cloudClient) {
+      cloudStatus(t('authConfigMissing'), true);
+      return;
+    }
+    if (!cloudUser) {
+      cloudStatus(t('authSignedOut'), false);
+      return;
+    }
     const { error } = await cloudClient.auth.signOut();
     if (error) cloudStatus(error.message, true);
     else cloudStatus(t('authSignedOut'), false);
@@ -245,6 +257,7 @@ async function syncUserFromSession() {
 
 async function initCloud(onDataChange) {
   cloudOnDataChange = onDataChange;
+  setAuthUi();
   if (!isCloudConfigured()) {
     cloudStatus(t('authConfigMissing'), true);
     return false;
