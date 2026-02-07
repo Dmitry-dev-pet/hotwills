@@ -2,6 +2,7 @@
 
 const CLOUD = {
   TABLE: 'models',
+  PROFILE_TABLE: 'user_profiles',
   IMAGE_BUCKET: (window.HOTWILLS_CONFIG && window.HOTWILLS_CONFIG.imageBucket) || 'model-images'
 };
 
@@ -13,12 +14,17 @@ let cloudOnDataChange = null;
 let cloudOwnerId = null;
 let cloudOwnerOptions = [];
 let cloudOwnersLastError = '';
+let cloudOwnerEmailById = {};
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function normalizeUserId(value) {
   const out = (value || '').trim().toLowerCase();
   return UUID_RE.test(out) ? out : '';
+}
+
+function normalizeEmail(value) {
+  return (value || '').trim().toLowerCase();
 }
 
 function getCloudOwnerId() {
@@ -43,8 +49,16 @@ function getCompactUserId(id) {
 
 function labelForOwner(ownerId) {
   if (!ownerId) return '';
-  if (cloudUser && ownerId === cloudUser.id) return t('catalogOwnerMine');
-  return ownerId;
+  const email = cloudOwnerEmailById[ownerId] || '';
+  if (cloudUser && ownerId === cloudUser.id) {
+    return email ? `${email} (${t('catalogOwnerMine')})` : t('catalogOwnerMine');
+  }
+  return email || ownerId;
+}
+
+function ownerStatusLabel(ownerId) {
+  if (!ownerId) return '';
+  return cloudOwnerEmailById[ownerId] || getCompactUserId(ownerId);
 }
 
 function isCloudConfigured() {
@@ -210,6 +224,16 @@ async function uploadImageFilesToCloud(fileList) {
   return out;
 }
 
+async function ensureCurrentUserProfile() {
+  if (!cloudClient || !cloudUser) return;
+  const email = normalizeEmail(cloudUser.email || '');
+  if (!email) return;
+  cloudOwnerEmailById[cloudUser.id] = email;
+  await cloudClient
+    .from(CLOUD.PROFILE_TABLE)
+    .upsert({ user_id: cloudUser.id, email }, { onConflict: 'user_id' });
+}
+
 function renderOwnerSelect() {
   const ownerSelect = document.getElementById('authOwnerSelect');
   if (!ownerSelect) return;
@@ -242,6 +266,7 @@ async function refreshOwnerOptions() {
 
   if (!cloudClient) {
     cloudOwnerOptions = [];
+    cloudOwnerEmailById = {};
     renderOwnerSelect();
     return;
   }
@@ -255,6 +280,10 @@ async function refreshOwnerOptions() {
   if (error) {
     cloudOwnersLastError = error.message || String(error);
     cloudOwnerOptions = cloudUser?.id ? [cloudUser.id] : [];
+    cloudOwnerEmailById = {};
+    if (cloudUser?.id && cloudUser?.email) {
+      cloudOwnerEmailById[cloudUser.id] = normalizeEmail(cloudUser.email);
+    }
     if (!cloudOwnerId || !cloudOwnerOptions.includes(cloudOwnerId)) {
       cloudOwnerId = cloudOwnerOptions[0] || null;
     }
@@ -268,10 +297,35 @@ async function refreshOwnerOptions() {
     if (id) ownerSet.add(id);
   });
   if (cloudUser?.id) ownerSet.add(cloudUser.id);
-  cloudOwnerOptions = Array.from(ownerSet).sort((a, b) => {
+
+  const ownerIds = Array.from(ownerSet);
+  cloudOwnerEmailById = {};
+  if (cloudUser?.id && cloudUser?.email) {
+    cloudOwnerEmailById[cloudUser.id] = normalizeEmail(cloudUser.email);
+  }
+
+  if (ownerIds.length > 0) {
+    const { data: profiles, error: profilesError } = await cloudClient
+      .from(CLOUD.PROFILE_TABLE)
+      .select('user_id,email')
+      .in('user_id', ownerIds);
+    if (profilesError) {
+      cloudOwnersLastError = profilesError.message || String(profilesError);
+    } else {
+      (profiles || []).forEach((row) => {
+        const userId = normalizeUserId(row.user_id);
+        const email = normalizeEmail(row.email);
+        if (userId && email) cloudOwnerEmailById[userId] = email;
+      });
+    }
+  }
+
+  cloudOwnerOptions = ownerIds.sort((a, b) => {
     if (cloudUser?.id && a === cloudUser.id) return -1;
     if (cloudUser?.id && b === cloudUser.id) return 1;
-    return a.localeCompare(b);
+    const ak = cloudOwnerEmailById[a] || a;
+    const bk = cloudOwnerEmailById[b] || b;
+    return ak.localeCompare(bk);
   });
 
   if (!cloudOwnerOptions.length && cloudUser?.id) {
@@ -310,7 +364,7 @@ function setAuthUi() {
     cloudStatus(t('catalogOwnerOnlyMine'), false);
   } else if (ownerId) {
     const message = readOnlyView
-      ? `${t('authViewingUser', { id: getCompactUserId(ownerId) })} (${t('readOnlyMode')})`
+      ? `${t('authViewingUser', { id: ownerStatusLabel(ownerId) })} (${t('readOnlyMode')})`
       : t('authViewingOwn');
     cloudStatus(message, false);
   }
@@ -406,6 +460,7 @@ function startCloudRealtime() {
 async function syncUserFromSession() {
   const { data } = await cloudClient.auth.getSession();
   cloudUser = data?.session?.user || null;
+  await ensureCurrentUserProfile();
   if (cloudUser && !normalizeUserId(cloudOwnerId)) {
     cloudOwnerId = cloudUser.id;
   }

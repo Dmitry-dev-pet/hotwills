@@ -114,4 +114,4 @@ If variables are not set, deploy still works but uses committed `config.js`.
 - Each authenticated user can update/delete only own rows.
 - New rows are inserted with `created_by = auth.uid()`.
 - Storage object keys are user-scoped (`<auth.uid()>/...`).
-- Another user's catalog can be opened from the account menu (`Каталог` selector) even without login, always in read-only mode.
+- Another user's catalog can be opened from the account menu (`Каталог` selector) by email, even without login, always in read-only mode.
