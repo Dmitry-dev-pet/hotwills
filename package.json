@@ -1,0 +1,13 @@
+{
+  "name": "hotwills-supabase-pages",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "fetch:source": "node scripts/fetch_source_data.mjs",
+    "upload:supabase": "node scripts/upload_to_supabase.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.4"
+  }
+}

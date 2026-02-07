@@ -1,0 +1,46 @@
+name: Deploy GitHub Pages
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure config.js from repo variables (optional)
+        if: ${{ vars.SUPABASE_URL != '' && vars.SUPABASE_ANON_KEY != '' }}
+        run: |
+          cat > config.js <<'JS'
+          window.HOTWILLS_CONFIG = {
+            supabaseUrl: "${{ vars.SUPABASE_URL }}",
+            supabaseAnonKey: "${{ vars.SUPABASE_ANON_KEY }}",
+            imageBucket: "model-images"
+          };
+          JS
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy
+        uses: actions/deploy-pages@v4

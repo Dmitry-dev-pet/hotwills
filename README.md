@@ -1,0 +1,98 @@
+# Hotwills Collaborative Catalog (GitHub Pages + Supabase)
+
+Static multiuser catalog for the Yesteryear dataset.
+
+- Frontend: static files (`index.html`, `app.js`, `styles.css`) for GitHub Pages
+- Auth + DB + Realtime + Storage: Supabase
+- Source parser: downloads upstream `data.json` and all model images
+
+## 1. Supabase setup
+
+1. Create a Supabase project.
+2. Open SQL Editor and run `/Users/dmitry/Project/hotwills/supabase/schema.sql`.
+3. In Supabase Auth settings, optionally disable email confirmation for quick testing.
+4. Copy project URL and anon key.
+5. Edit `/Users/dmitry/Project/hotwills/config.js`:
+
+```js
+window.HOTWILLS_CONFIG = {
+  supabaseUrl: "https://YOUR_PROJECT_REF.supabase.co",
+  supabaseAnonKey: "YOUR_SUPABASE_ANON_KEY",
+  imageBucket: "model-images"
+};
+```
+
+## 2. Install dependencies
+
+```bash
+cd /Users/dmitry/Project/hotwills
+npm install
+```
+
+## 3. Parse source data + images
+
+```bash
+npm run fetch:source
+```
+
+This saves:
+- `/Users/dmitry/Project/hotwills/data/source/data.json`
+- `/Users/dmitry/Project/hotwills/data/source/images/*`
+- `/Users/dmitry/Project/hotwills/data/source/manifest.json`
+
+## 4. Import into Supabase
+
+Use service role key only from terminal (never in frontend):
+
+```bash
+SUPABASE_URL="https://YOUR_PROJECT_REF.supabase.co" \
+SUPABASE_SERVICE_ROLE_KEY="YOUR_SERVICE_ROLE_KEY" \
+npm run upload:supabase
+```
+
+## 5. Run locally (optional)
+
+```bash
+python3 -m http.server 8080
+# open http://localhost:8080
+```
+
+## 6. Deploy to GitHub Pages
+
+Push repository and enable Pages for the default branch/root.
+
+## 7. GitHub Actions automation
+
+This repo includes two workflows:
+
+- `/Users/dmitry/Project/hotwills/.github/workflows/supabase-sync.yml`
+- `/Users/dmitry/Project/hotwills/.github/workflows/deploy-pages.yml`
+
+### Required GitHub secrets
+
+For Supabase sync workflow:
+
+- `SUPABASE_URL` (example: `https://YOUR_PROJECT_REF.supabase.co`)
+- `SUPABASE_SERVICE_ROLE_KEY` (server-side key; keep secret)
+
+### Recommended GitHub repository variables
+
+For Pages deploy workflow (to generate `config.js` on CI):
+
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+
+If variables are not set, deploy still works but uses committed `config.js`.
+
+### Schedules
+
+- `Sync Source To Supabase` runs daily at `03:00 UTC` and can be started manually.
+- `Deploy GitHub Pages` runs on pushes to `main` and can be started manually.
+
+## Multiuser model
+
+- All authenticated users can read all rows.
+- Any authenticated user can update/delete rows (collaborative mode).
+- New rows are inserted with `created_by = auth.uid()`.
+
+If you need strict ownership (user edits only own rows), adjust policies in `/Users/dmitry/Project/hotwills/supabase/schema.sql`.

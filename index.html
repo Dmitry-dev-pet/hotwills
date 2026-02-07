@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hotwills Collaborative Catalog</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <h1>Hotwills Collaborative Catalog</h1>
+      <p>GitHub Pages frontend + Supabase auth/realtime/storage</p>
+    </header>
+
+    <section id="configNotice" class="card warning hidden">
+      <h2>Supabase config required</h2>
+      <p>Fill <code>/Users/dmitry/Project/hotwills/config.js</code> with your project URL and anon key.</p>
+    </section>
+
+    <section id="authCard" class="card">
+      <h2>Sign in</h2>
+      <form id="authForm" class="grid two-cols">
+        <label>
+          Email
+          <input id="emailInput" type="email" required autocomplete="username" />
+        </label>
+        <label>
+          Password
+          <input id="passwordInput" type="password" required autocomplete="current-password" />
+        </label>
+        <div class="actions full-row">
+          <button type="submit" id="signInBtn">Sign in</button>
+          <button type="button" id="signUpBtn" class="muted">Sign up</button>
+        </div>
+      </form>
+      <p class="hint">For first login: sign up, then confirm email if your Supabase project requires it.</p>
+    </section>
+
+    <section id="appCard" class="card hidden">
+      <div class="toolbar">
+        <input id="searchInput" type="search" placeholder="Search by name, code, year" />
+        <button id="refreshBtn" type="button" class="muted">Refresh</button>
+        <button id="signOutBtn" type="button" class="danger">Sign out</button>
+      </div>
+
+      <h2>Add model</h2>
+      <form id="createForm" class="grid four-cols">
+        <label>
+          Name
+          <input id="newName" type="text" required />
+        </label>
+        <label>
+          Year
+          <input id="newYear" type="text" required placeholder="1966-1974" />
+        </label>
+        <label>
+          Code
+          <input id="newCode" type="text" required placeholder="Y-13" />
+        </label>
+        <label>
+          Link
+          <input id="newLink" type="url" placeholder="https://..." />
+        </label>
+        <label>
+          Existing image path
+          <input id="newImageFile" type="text" placeholder="0.jpg or user/file.jpg" />
+        </label>
+        <label class="full-row">
+          Image (optional upload)
+          <input id="newImage" type="file" accept="image/*" />
+        </label>
+        <div class="actions full-row">
+          <button type="submit">Create</button>
+        </div>
+      </form>
+
+      <h2>Models</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Preview</th>
+              <th>Name</th>
+              <th>Year</th>
+              <th>Code</th>
+              <th>Image file</th>
+              <th>Link</th>
+              <th>Owner</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="modelsBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <p id="status" class="status"></p>
+  </main>
+
+  <script src="config.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
