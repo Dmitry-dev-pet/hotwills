@@ -36,22 +36,58 @@ function mapRowToModel(row) {
   };
 }
 
-function normalizeImagePathForUser(imagePath, userId) {
-  const raw = (imagePath || '').trim();
-  if (!raw) return '';
-  if (raw.includes('/')) return raw;
-  return userId ? `${userId}/${raw}` : raw;
-}
-
 function mapModelToRow(model, userId) {
   return {
     name: (model.name || '').trim(),
     year: (model.year || '').trim(),
     code: (model.code || '').trim(),
-    image_file: normalizeImagePathForUser(model.image, userId),
+    image_file: (model.image || '').trim(),
     source_link: (model.link || '').trim() || null,
     created_by: userId || null
   };
+}
+
+function getStoragePublicUrl(path) {
+  if (!cloudClient || !path) return '';
+  const { data } = cloudClient.storage.from(CLOUD.IMAGE_BUCKET).getPublicUrl(path);
+  return data?.publicUrl || '';
+}
+
+async function fetchBlobByUrl(url) {
+  if (!url) return null;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    return await response.blob();
+  } catch (e) {
+    return null;
+  }
+}
+
+async function ensureUserScopedImagePath(imagePath, userId) {
+  const raw = (imagePath || '').trim();
+  if (!raw) return { ok: false, error: 'empty image path' };
+  if (raw.includes('/')) return { ok: true, path: raw };
+
+  const scopedPath = `${userId}/${raw}`;
+  const scopedBlob = await fetchBlobByUrl(getStoragePublicUrl(scopedPath));
+  if (scopedBlob) return { ok: true, path: scopedPath };
+
+  // 1) try existing object from storage root key (legacy import)
+  // 2) fallback to local bundled image under /img
+  const fromStorage = await fetchBlobByUrl(getStoragePublicUrl(raw));
+  const imgDir = (typeof CONFIG !== 'undefined' && CONFIG && CONFIG.IMG_DIR) ? CONFIG.IMG_DIR : 'img/';
+  const fromLocal = fromStorage ? null : await fetchBlobByUrl(imgDir + encodeURIComponent(raw));
+  const blob = fromStorage || fromLocal;
+  if (!blob) {
+    return { ok: false, error: `image not found: ${raw}` };
+  }
+
+  const { error } = await cloudClient.storage
+    .from(CLOUD.IMAGE_BUCKET)
+    .upload(scopedPath, blob, { upsert: true, contentType: blob.type || 'application/octet-stream' });
+  if (error) return { ok: false, error: error.message || String(error) };
+  return { ok: true, path: scopedPath };
 }
 
 function getImageUrlFromCloud(path) {
@@ -78,9 +114,29 @@ async function saveModelsToCloud(models) {
   if (!cloudClient) return { ok: false, error: new Error('Cloud client not initialized') };
   if (!cloudUser) return { ok: false, error: new Error('Not authenticated') };
 
-  const payload = (models || [])
-    .map((model) => mapModelToRow(model, cloudUser.id))
-    .filter((row) => row.name && row.year && row.code && row.image_file);
+  const prepared = [];
+  for (const model of (models || [])) {
+    const base = {
+      name: (model.name || '').trim(),
+      year: (model.year || '').trim(),
+      code: (model.code || '').trim(),
+      image: (model.image || '').trim(),
+      link: (model.link || '').trim()
+    };
+    if (!base.name || !base.year || !base.code || !base.image) continue;
+
+    const resolved = await ensureUserScopedImagePath(base.image, cloudUser.id);
+    if (!resolved.ok) {
+      return { ok: false, error: new Error(`Image prepare failed for "${base.image}": ${resolved.error}`) };
+    }
+
+    prepared.push({
+      ...base,
+      image: resolved.path
+    });
+  }
+
+  const payload = prepared.map((model) => mapModelToRow(model, cloudUser.id));
 
   if (payload.length === 0) return { ok: false, error: new Error('No valid rows to save') };
 
