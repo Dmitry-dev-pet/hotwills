@@ -161,14 +161,14 @@ function tryLoadDataJson() {
       return Array.isArray(arr) ? arr : [];
     });
 
-  const hasCloudUser = typeof getCloudUser === 'function' && Boolean(getCloudUser());
+  const hasCloudOwner = typeof getCloudOwnerId === 'function' && Boolean(getCloudOwnerId());
   if (
     typeof fetchModelsFromCloud === 'function'
     && typeof isCloudReady === 'function'
     && isCloudReady()
-    && hasCloudUser
+    && hasCloudOwner
   ) {
-    return fetchModelsFromCloud().catch(() => fetchLocal());
+    return fetchModelsFromCloud(getCloudOwnerId()).catch(() => fetchLocal());
   }
   return fetchLocal();
 }

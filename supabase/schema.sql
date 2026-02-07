@@ -43,21 +43,25 @@ for each row execute function public.set_updated_at();
 -- RLS
 alter table public.models enable row level security;
 
--- Required grants for authenticated API role (RLS still governs row access)
+-- Required grants for API roles (RLS still governs row access)
+grant usage on schema public to anon;
+grant select on table public.models to anon;
 grant usage on schema public to authenticated;
 grant select, insert, update, delete on table public.models to authenticated;
 
+drop policy if exists "models_select_public" on public.models;
 drop policy if exists "models_select_authenticated" on public.models;
 drop policy if exists "models_insert_authenticated" on public.models;
 drop policy if exists "models_update_authenticated" on public.models;
 drop policy if exists "models_delete_authenticated" on public.models;
 
--- User-scoped access: each authenticated user sees and edits only own rows
-create policy "models_select_authenticated"
+-- Public read (anon + authenticated) for catalog viewing.
+-- Writes are still user-scoped and authenticated-only.
+create policy "models_select_public"
 on public.models
 for select
-to authenticated
-using ((select auth.uid()) = created_by);
+to public
+using (true);
 
 -- Insert only as self
 create policy "models_insert_authenticated"

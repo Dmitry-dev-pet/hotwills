@@ -110,7 +110,8 @@ If variables are not set, deploy still works but uses committed `config.js`.
 
 ## Multiuser model
 
-- Each authenticated user can read only own rows (`created_by = auth.uid()`).
+- Each authenticated user can read any catalog rows (for shared viewing).
 - Each authenticated user can update/delete only own rows.
 - New rows are inserted with `created_by = auth.uid()`.
 - Storage object keys are user-scoped (`<auth.uid()>/...`).
+- Another user's catalog can be opened from the account menu (`Каталог` selector) even without login, always in read-only mode.

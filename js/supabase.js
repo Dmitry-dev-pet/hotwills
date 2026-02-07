@@ -10,6 +10,41 @@ let cloudUser = null;
 let cloudAuthSub = null;
 let cloudRealtime = null;
 let cloudOnDataChange = null;
+let cloudOwnerId = null;
+let cloudOwnerOptions = [];
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function normalizeUserId(value) {
+  const out = (value || '').trim().toLowerCase();
+  return UUID_RE.test(out) ? out : '';
+}
+
+function getCloudOwnerId() {
+  if (cloudOwnerId) return cloudOwnerId;
+  return cloudUser?.id || null;
+}
+
+function isCloudReadOnlyView() {
+  const ownerId = getCloudOwnerId();
+  return Boolean(ownerId && (!cloudUser || ownerId !== cloudUser.id));
+}
+
+async function triggerCloudRefresh() {
+  if (typeof cloudOnDataChange !== 'function') return;
+  await cloudOnDataChange();
+}
+
+function getCompactUserId(id) {
+  if (!id) return '';
+  return id.length <= 10 ? id : `${id.slice(0, 8)}...`;
+}
+
+function labelForOwner(ownerId) {
+  if (!ownerId) return '';
+  if (cloudUser && ownerId === cloudUser.id) return t('catalogOwnerMine');
+  return ownerId;
+}
 
 function isCloudConfigured() {
   const cfg = window.HOTWILLS_CONFIG || {};
@@ -97,13 +132,14 @@ function getImageUrlFromCloud(path) {
   return data?.publicUrl || (CONFIG.IMG_DIR + path);
 }
 
-async function fetchModelsFromCloud() {
+async function fetchModelsFromCloud(ownerId) {
   if (!cloudClient) throw new Error('Cloud client not initialized');
-  if (!cloudUser) throw new Error('Not authenticated');
+  const targetOwnerId = normalizeUserId(ownerId) || getCloudOwnerId();
+  if (!targetOwnerId) throw new Error('No target owner selected');
   const { data, error } = await cloudClient
     .from(CLOUD.TABLE)
     .select('id,name,year,code,image_file,source_link,created_by,updated_at')
-    .eq('created_by', cloudUser.id)
+    .eq('created_by', targetOwnerId)
     .order('code', { ascending: true });
 
   if (error) throw error;
@@ -113,6 +149,7 @@ async function fetchModelsFromCloud() {
 async function saveModelsToCloud(models) {
   if (!cloudClient) return { ok: false, error: new Error('Cloud client not initialized') };
   if (!cloudUser) return { ok: false, error: new Error('Not authenticated') };
+  if (isCloudReadOnlyView()) return { ok: false, error: new Error(t('readOnlyEditorDisabled')) };
 
   const prepared = [];
   for (const model of (models || [])) {
@@ -156,6 +193,7 @@ async function uploadImageFilesToCloud(fileList) {
   const files = Array.from(fileList || []);
   if (!files.length) return [];
   if (!cloudClient || !cloudUser) return files.map((f) => ({ file: f, path: f.name, uploaded: false }));
+  if (isCloudReadOnlyView()) return files.map((f) => ({ file: f, path: f.name, uploaded: false }));
 
   const out = [];
   for (const file of files) {
@@ -171,15 +209,99 @@ async function uploadImageFilesToCloud(fileList) {
   return out;
 }
 
+function renderOwnerSelect() {
+  const ownerSelect = document.getElementById('authOwnerSelect');
+  if (!ownerSelect) return;
+
+  const options = cloudOwnerOptions.filter(Boolean);
+  const fallbackOwnerId = cloudUser?.id || options[0] || '';
+  const targetOwnerId = normalizeUserId(getCloudOwnerId()) || fallbackOwnerId;
+  const finalOptions = options.length ? options : (fallbackOwnerId ? [fallbackOwnerId] : []);
+
+  if (!finalOptions.length) {
+    ownerSelect.innerHTML = `<option value="">${t('catalogOwnerNoData')}</option>`;
+    ownerSelect.disabled = true;
+    return;
+  }
+
+  ownerSelect.innerHTML = finalOptions.map((id) => {
+    const selected = id === targetOwnerId ? ' selected' : '';
+    return `<option value="${id}"${selected}>${escapeHtml(labelForOwner(id))}</option>`;
+  }).join('');
+  ownerSelect.disabled = false;
+}
+
+async function refreshOwnerOptions() {
+  const ownerSelect = document.getElementById('authOwnerSelect');
+  if (ownerSelect) {
+    ownerSelect.disabled = true;
+    ownerSelect.innerHTML = `<option value="">${t('catalogOwnerLoading')}</option>`;
+  }
+
+  if (!cloudClient) {
+    cloudOwnerOptions = [];
+    renderOwnerSelect();
+    return;
+  }
+
+  const { data, error } = await cloudClient
+    .from(CLOUD.TABLE)
+    .select('created_by')
+    .not('created_by', 'is', null)
+    .limit(5000);
+
+  if (error) {
+    cloudStatus(error.message || String(error), true);
+    cloudOwnerOptions = cloudUser?.id ? [cloudUser.id] : [];
+    if (!cloudOwnerId || !cloudOwnerOptions.includes(cloudOwnerId)) {
+      cloudOwnerId = cloudOwnerOptions[0] || null;
+    }
+    renderOwnerSelect();
+    return;
+  }
+
+  const ownerSet = new Set();
+  (data || []).forEach((row) => {
+    const id = normalizeUserId(row.created_by);
+    if (id) ownerSet.add(id);
+  });
+  if (cloudUser?.id) ownerSet.add(cloudUser.id);
+  cloudOwnerOptions = Array.from(ownerSet).sort((a, b) => {
+    if (cloudUser?.id && a === cloudUser.id) return -1;
+    if (cloudUser?.id && b === cloudUser.id) return 1;
+    return a.localeCompare(b);
+  });
+
+  if (!cloudOwnerOptions.length && cloudUser?.id) {
+    cloudOwnerOptions = [cloudUser.id];
+  }
+  if (!cloudOwnerId || !cloudOwnerOptions.includes(cloudOwnerId)) {
+    cloudOwnerId = cloudUser?.id || cloudOwnerOptions[0] || null;
+  }
+
+  renderOwnerSelect();
+}
+
 function setAuthUi() {
   const signInBtn = document.getElementById('authSignInBtn');
   const signOutBtn = document.getElementById('authSignOutBtn');
+  const ownerSelect = document.getElementById('authOwnerSelect');
   const userEl = document.getElementById('authUser');
 
   if (!signInBtn || !signOutBtn || !userEl) return;
 
+  const hasUser = Boolean(cloudUser);
+  const ownerId = getCloudOwnerId();
+  const readOnlyView = isCloudReadOnlyView();
   userEl.textContent = cloudUser ? (cloudUser.email || cloudUser.id) : t('anonymous');
-  signOutBtn.disabled = false;
+  signOutBtn.disabled = !hasUser;
+
+  if (ownerId) {
+    const message = readOnlyView
+      ? `${t('authViewingUser', { id: getCompactUserId(ownerId) })} (${t('readOnlyMode')})`
+      : t('authViewingOwn');
+    cloudStatus(message, false);
+  }
 
   signInBtn.onclick = async () => {
     if (!cloudClient) {
@@ -207,6 +329,19 @@ function setAuthUi() {
     if (error) cloudStatus(error.message, true);
     else cloudStatus(t('authSignedOut'), false);
   };
+
+  if (ownerSelect) {
+    ownerSelect.onchange = async (e) => {
+      const nextOwnerId = normalizeUserId(e.target.value);
+      if (!nextOwnerId) return;
+      cloudOwnerId = nextOwnerId;
+      startCloudRealtime();
+      await triggerCloudRefresh();
+      setAuthUi();
+    };
+  }
+
+  renderOwnerSelect();
 }
 
 function setGoogleButtonState(googleEnabled) {
@@ -240,10 +375,17 @@ function stopCloudRealtime() {
 
 function startCloudRealtime() {
   stopCloudRealtime();
-  if (!cloudClient || !cloudUser) return;
+  if (!cloudClient) return;
+  const ownerId = getCloudOwnerId();
+  if (!ownerId) return;
   cloudRealtime = cloudClient
-    .channel('models-live')
-    .on('postgres_changes', { event: '*', schema: 'public', table: CLOUD.TABLE }, () => {
+    .channel(`models-live-${ownerId}`)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: CLOUD.TABLE,
+      filter: `created_by=eq.${ownerId}`
+    }, () => {
       if (typeof cloudOnDataChange === 'function') cloudOnDataChange();
     })
     .subscribe();
@@ -252,6 +394,13 @@ function startCloudRealtime() {
 async function syncUserFromSession() {
   const { data } = await cloudClient.auth.getSession();
   cloudUser = data?.session?.user || null;
+  if (cloudUser && !normalizeUserId(cloudOwnerId)) {
+    cloudOwnerId = cloudUser.id;
+  }
+  if (!cloudUser && cloudOwnerId && !normalizeUserId(cloudOwnerId)) {
+    cloudOwnerId = null;
+  }
+  await refreshOwnerOptions();
   setAuthUi();
 }
 
@@ -287,3 +436,6 @@ window.uploadImageFilesToCloud = uploadImageFilesToCloud;
 window.getImageUrlFromCloud = getImageUrlFromCloud;
 window.getCloudUser = () => cloudUser;
 window.isCloudReady = () => Boolean(cloudClient);
+window.isCloudReadOnlyView = isCloudReadOnlyView;
+window.getCloudOwnerId = getCloudOwnerId;
+window.refreshCloudUi = setAuthUi;

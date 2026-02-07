@@ -49,6 +49,10 @@ function toJSON() {
 function renderEditor() {
   const tbody = document.getElementById('tbody');
   tbody.innerHTML = '';
+  if (typeof isCloudReadOnlyView === 'function' && isCloudReadOnlyView()) {
+    tbody.innerHTML = '<tr><td colspan="6" class="table-empty">' + t('readOnlyEditorDisabled') + '</td></tr>';
+    return;
+  }
 
   if (data.length === 0) {
     tryLoadDataJson()

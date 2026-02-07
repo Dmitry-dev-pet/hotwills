@@ -1,6 +1,10 @@
 'use strict';
 
 // ─── App (main) ─────────────────────────────────────────────────────────
+function isReadOnlyCloudView() {
+  return typeof isCloudReadOnlyView === 'function' && isCloudReadOnlyView();
+}
+
 function sortBy(key, noToggle) {
   if (!noToggle && sortKey === key) {
     sortDesc = !sortDesc;
@@ -30,21 +34,42 @@ function renderCurrent() {
 async function refreshCloudData() {
   try {
     const rows = await tryLoadDataJson();
+    if (isReadOnlyCloudView() && currentMode === 'editor') {
+      currentMode = 'gallery';
+      setMode('gallery');
+      history.replaceState(null, '', location.pathname + location.search);
+    }
     loadData(rows);
+    updateToolbarVisibility(currentMode);
   } catch (e) {
     loadData([]);
+    updateToolbarVisibility(currentMode);
   }
 }
 
 function updateToolbarVisibility(mode) {
-  document.getElementById('viewGallery').classList.toggle('hidden', mode !== 'gallery');
-  document.getElementById('viewEditor').classList.toggle('hidden', mode !== 'editor');
+  const readOnly = isReadOnlyCloudView();
+  const effectiveMode = readOnly && mode === 'editor' ? 'gallery' : mode;
+
+  document.getElementById('viewGallery').classList.toggle('hidden', effectiveMode !== 'gallery');
+  document.getElementById('viewEditor').classList.toggle('hidden', effectiveMode !== 'editor');
   document.getElementById('viewInfographic').classList.toggle('hidden', mode !== 'infographic');
-  document.querySelectorAll('.mode-editor').forEach(el => el.style.display = mode === 'editor' ? '' : 'none');
-  document.querySelectorAll('.mode-gallery').forEach(el => el.style.display = (mode === 'gallery' || mode === 'infographic') ? '' : 'none');
+  document.querySelectorAll('.mode-editor').forEach(el => el.style.display = (effectiveMode === 'editor' && !readOnly) ? '' : 'none');
+  document.querySelectorAll('.mode-gallery').forEach(el => el.style.display = (effectiveMode === 'gallery' || effectiveMode === 'infographic') ? '' : 'none');
+
+  const lockIds = ['loadJsonBtn', 'copyBtn', 'saveBtn', 'cloudSaveBtn', 'addPhotoBtn'];
+  lockIds.forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.disabled = readOnly;
+    el.title = readOnly ? t('readOnlyEditorDisabled') : '';
+  });
+
   const modeSelect = document.getElementById('modeSelect');
   if (modeSelect) {
-    modeSelect.value = mode;
+    const editorOpt = modeSelect.querySelector('option[value="editor"]');
+    if (editorOpt) editorOpt.disabled = readOnly;
+    modeSelect.value = effectiveMode;
     modeSelect.querySelectorAll('option').forEach(opt => {
       opt.textContent = t(opt.dataset.t || opt.value);
     });
@@ -152,6 +177,11 @@ document.addEventListener('keydown', (e) => {
 });
 
 document.getElementById('fileInput').addEventListener('change', e => {
+  if (isReadOnlyCloudView()) {
+    showToast(t('readOnlyEditorDisabled'));
+    e.target.value = '';
+    return;
+  }
   const file = e.target.files[0];
   if (!file) return;
   const r = new FileReader();
@@ -183,8 +213,19 @@ document.getElementById('sortSelect').addEventListener('change', (e) => {
   sortBy(e.target.value, true);
   if (currentMode === 'infographic') renderInfographic();
 });
-document.getElementById('addPhotoBtn').addEventListener('click', () => document.getElementById('addPhotoInput').click());
+document.getElementById('addPhotoBtn').addEventListener('click', () => {
+  if (isReadOnlyCloudView()) {
+    showToast(t('readOnlyEditorDisabled'));
+    return;
+  }
+  document.getElementById('addPhotoInput').click();
+});
 document.getElementById('addPhotoInput').addEventListener('change', async (e) => {
+  if (isReadOnlyCloudView()) {
+    showToast(t('readOnlyEditorDisabled'));
+    e.target.value = '';
+    return;
+  }
   const files = e.target.files;
   if (!files || files.length === 0) return;
 
@@ -208,11 +249,13 @@ document.getElementById('addPhotoInput').addEventListener('change', async (e) =>
 });
 
 document.getElementById('copyBtn').addEventListener('click', () => {
+  if (isReadOnlyCloudView()) { showToast(t('readOnlyEditorDisabled')); return; }
   if (data.length === 0) { showToast(t('loadJsonFirst')); return; }
   navigator.clipboard.writeText(toJSON()).then(() => showToast(t('copiedToClipboard')));
 });
 
 document.getElementById('saveBtn').addEventListener('click', () => {
+  if (isReadOnlyCloudView()) { showToast(t('readOnlyEditorDisabled')); return; }
   if (data.length === 0) { showToast(t('loadJsonFirst')); return; }
   const blob = new Blob([toJSON()], { type: 'application/json' });
   const a = document.createElement('a');
@@ -224,6 +267,10 @@ document.getElementById('saveBtn').addEventListener('click', () => {
 });
 
 document.getElementById('cloudSaveBtn').addEventListener('click', async () => {
+  if (isReadOnlyCloudView()) {
+    showToast(t('readOnlyEditorDisabled'));
+    return;
+  }
   if (typeof saveModelsToCloud !== 'function') {
     showToast(t('cloudNotConfigured'));
     return;
@@ -250,7 +297,14 @@ document.getElementById('cloudReloadBtn').addEventListener('click', async () => 
 document.getElementById('modeSelect').addEventListener('change', (e) => {
   const mode = e.target.value;
   if (mode === 'gallery') switchToGallery();
-  else if (mode === 'editor') switchToEditor();
+  else if (mode === 'editor') {
+    if (isReadOnlyCloudView()) {
+      showToast(t('readOnlyEditorDisabled'));
+      switchToGallery();
+    } else {
+      switchToEditor();
+    }
+  }
   else if (mode === 'infographic') switchToInfographic();
 });
 
@@ -270,6 +324,7 @@ document.getElementById('langSelect').addEventListener('change', (e) => {
   setLang(e.target.value);
   document.documentElement.lang = getLang();
   applyTranslations();
+  if (typeof refreshCloudUi === 'function') refreshCloudUi();
   document.title = t('pageTitle');
   document.getElementById('searchInput').placeholder = t('searchPlaceholder');
   updateToolbarVisibility(currentMode);
@@ -277,6 +332,7 @@ document.getElementById('langSelect').addEventListener('change', (e) => {
 });
 
 applyTranslations();
+if (typeof refreshCloudUi === 'function') refreshCloudUi();
 document.title = t('pageTitle');
 document.getElementById('searchInput').placeholder = t('searchPlaceholder');
 updateToolbarVisibility(currentMode);

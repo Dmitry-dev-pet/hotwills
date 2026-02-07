@@ -104,6 +104,25 @@ body {
   background: var(--btn-hover);
 }
 
+.auth-owner-row {
+  display: grid;
+  gap: 4px;
+}
+
+.auth-owner-row label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.auth-owner-row select {
+  padding: 6px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 13px;
+}
+
 .auth-input {
   padding: 6px 10px;
   border: 1px solid var(--input-border);
