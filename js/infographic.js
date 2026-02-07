@@ -221,7 +221,7 @@ function renderInfographic() {
     return;
   }
 
-  const transpose = Boolean(infographicTranspose);
+  const transpose = false;
   grid.classList.toggle('transposed', transpose);
   chart.classList.toggle('transposed', transpose);
 

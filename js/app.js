@@ -36,19 +36,12 @@ async function refreshCloudData() {
   }
 }
 
-function updateTransposeButtonState() {
-  const btn = document.getElementById('transposeBtn');
-  if (!btn) return;
-  btn.classList.toggle('active', infographicTranspose);
-}
-
 function updateToolbarVisibility(mode) {
   document.getElementById('viewGallery').classList.toggle('hidden', mode !== 'gallery');
   document.getElementById('viewEditor').classList.toggle('hidden', mode !== 'editor');
   document.getElementById('viewInfographic').classList.toggle('hidden', mode !== 'infographic');
   document.querySelectorAll('.mode-editor').forEach(el => el.style.display = mode === 'editor' ? '' : 'none');
   document.querySelectorAll('.mode-gallery').forEach(el => el.style.display = (mode === 'gallery' || mode === 'infographic') ? '' : 'none');
-  document.querySelectorAll('.mode-infographic').forEach(el => el.style.display = mode === 'infographic' ? '' : 'none');
   const modeSelect = document.getElementById('modeSelect');
   if (modeSelect) {
     modeSelect.value = mode;
@@ -62,7 +55,6 @@ function updateToolbarVisibility(mode) {
     favBtn.textContent = favoritesFilter ? '♥' : '♡';
     favBtn.title = t('favorites');
   }
-  updateTransposeButtonState();
 }
 
 function showToast(msg) {
@@ -120,7 +112,6 @@ currentMode = getMode();
   sortKey = p.key;
   sortDesc = p.desc;
 })();
-infographicTranspose = getInfographicTranspose();
 
 document.getElementById('modalClose').addEventListener('click', closeModal);
 document.getElementById('yearModalClose').addEventListener('click', closeYearModal);
@@ -233,13 +224,6 @@ document.getElementById('cloudSaveBtn').addEventListener('click', async () => {
 document.getElementById('cloudReloadBtn').addEventListener('click', async () => {
   await refreshCloudData();
   showToast(t('cloudReloaded'));
-});
-
-document.getElementById('transposeBtn').addEventListener('click', () => {
-  infographicTranspose = !infographicTranspose;
-  setInfographicTranspose(infographicTranspose);
-  updateTransposeButtonState();
-  if (currentMode === 'infographic') renderInfographic();
 });
 
 document.getElementById('modeSelect').addEventListener('change', (e) => {
