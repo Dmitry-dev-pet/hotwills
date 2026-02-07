@@ -56,6 +56,7 @@ function getImageUrlFromCloud(path) {
 
 async function fetchModelsFromCloud() {
   if (!cloudClient) throw new Error('Cloud client not initialized');
+  if (!cloudUser) throw new Error('Not authenticated');
   const { data, error } = await cloudClient
     .from(CLOUD.TABLE)
     .select('id,name,year,code,image_file,source_link,created_by,updated_at')
