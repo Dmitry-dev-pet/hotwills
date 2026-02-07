@@ -172,42 +172,14 @@ async function uploadImageFilesToCloud(fileList) {
 }
 
 function setAuthUi() {
-  const emailInput = document.getElementById('authEmail');
-  const passInput = document.getElementById('authPassword');
-  const signInBtn = document.getElementById('authSignInBtn');
-  const signUpBtn = document.getElementById('authSignUpBtn');
   const googleBtn = document.getElementById('authGoogleBtn');
   const signOutBtn = document.getElementById('authSignOutBtn');
   const userEl = document.getElementById('authUser');
 
-  if (!emailInput || !passInput || !signInBtn || !signUpBtn || !googleBtn || !signOutBtn || !userEl) return;
+  if (!googleBtn || !signOutBtn || !userEl) return;
 
   userEl.textContent = cloudUser ? (cloudUser.email || cloudUser.id) : t('anonymous');
   signOutBtn.style.display = cloudUser ? '' : 'none';
-
-  signInBtn.onclick = async () => {
-    const email = emailInput.value.trim();
-    const password = passInput.value;
-    if (!email || !password) {
-      cloudStatus(t('authEnterCreds'), true);
-      return;
-    }
-    const { error } = await cloudClient.auth.signInWithPassword({ email, password });
-    if (error) cloudStatus(error.message, true);
-    else cloudStatus(t('authSignedIn'), false);
-  };
-
-  signUpBtn.onclick = async () => {
-    const email = emailInput.value.trim();
-    const password = passInput.value;
-    if (!email || !password) {
-      cloudStatus(t('authEnterCreds'), true);
-      return;
-    }
-    const { error } = await cloudClient.auth.signUp({ email, password });
-    if (error) cloudStatus(error.message, true);
-    else cloudStatus(t('authSignUpDone'), false);
-  };
 
   googleBtn.onclick = async () => {
     const redirectTo = `${location.origin}${location.pathname}`;
