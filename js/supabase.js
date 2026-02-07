@@ -271,55 +271,48 @@ async function refreshOwnerOptions() {
     return;
   }
 
-  const { data, error } = await cloudClient
-    .from(CLOUD.TABLE)
-    .select('created_by')
-    .not('created_by', 'is', null)
+  const ownerSet = new Set();
+  cloudOwnerEmailById = {};
+
+  const { data: profileRows, error: profileRowsError } = await cloudClient
+    .from(CLOUD.PROFILE_TABLE)
+    .select('user_id,email')
     .limit(5000);
 
-  if (error) {
-    cloudOwnersLastError = error.message || String(error);
-    cloudOwnerOptions = cloudUser?.id ? [cloudUser.id] : [];
-    cloudOwnerEmailById = {};
-    if (cloudUser?.id && cloudUser?.email) {
-      cloudOwnerEmailById[cloudUser.id] = normalizeEmail(cloudUser.email);
-    }
-    if (!cloudOwnerId || !cloudOwnerOptions.includes(cloudOwnerId)) {
-      cloudOwnerId = cloudOwnerOptions[0] || null;
-    }
-    renderOwnerSelect();
-    return;
+  if (profileRowsError) {
+    cloudOwnersLastError = profileRowsError.message || String(profileRowsError);
+  } else {
+    (profileRows || []).forEach((row) => {
+      const userId = normalizeUserId(row.user_id);
+      const email = normalizeEmail(row.email);
+      if (!userId) return;
+      ownerSet.add(userId);
+      if (email) cloudOwnerEmailById[userId] = email;
+    });
   }
 
-  const ownerSet = new Set();
-  (data || []).forEach((row) => {
-    const id = normalizeUserId(row.created_by);
-    if (id) ownerSet.add(id);
-  });
-  if (cloudUser?.id) ownerSet.add(cloudUser.id);
-
-  const ownerIds = Array.from(ownerSet);
-  cloudOwnerEmailById = {};
   if (cloudUser?.id && cloudUser?.email) {
+    ownerSet.add(cloudUser.id);
     cloudOwnerEmailById[cloudUser.id] = normalizeEmail(cloudUser.email);
   }
 
-  if (ownerIds.length > 0) {
-    const { data: profiles, error: profilesError } = await cloudClient
-      .from(CLOUD.PROFILE_TABLE)
-      .select('user_id,email')
-      .in('user_id', ownerIds);
-    if (profilesError) {
-      cloudOwnersLastError = profilesError.message || String(profilesError);
+  if (ownerSet.size === 0) {
+    const { data: modelOwners, error: modelOwnersError } = await cloudClient
+      .from(CLOUD.TABLE)
+      .select('created_by')
+      .not('created_by', 'is', null)
+      .limit(5000);
+    if (modelOwnersError) {
+      cloudOwnersLastError = cloudOwnersLastError || modelOwnersError.message || String(modelOwnersError);
     } else {
-      (profiles || []).forEach((row) => {
-        const userId = normalizeUserId(row.user_id);
-        const email = normalizeEmail(row.email);
-        if (userId && email) cloudOwnerEmailById[userId] = email;
+      (modelOwners || []).forEach((row) => {
+        const userId = normalizeUserId(row.created_by);
+        if (userId) ownerSet.add(userId);
       });
     }
   }
 
+  const ownerIds = Array.from(ownerSet);
   cloudOwnerOptions = ownerIds.sort((a, b) => {
     if (cloudUser?.id && a === cloudUser.id) return -1;
     if (cloudUser?.id && b === cloudUser.id) return 1;
