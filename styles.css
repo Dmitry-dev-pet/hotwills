@@ -105,6 +105,11 @@ button {
   cursor: pointer;
 }
 
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 button.muted {
   background: #2d3c4d;
   border-color: #3a4b5e;

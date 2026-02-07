@@ -61,6 +61,30 @@ function readOAuthErrorFromUrl() {
   return errorDescription ? decodeURIComponent(errorDescription.replace(/\+/g, " ")) : "";
 }
 
+async function configureOAuthButtons() {
+  try {
+    const response = await fetch(`${cfg.supabaseUrl}/auth/v1/settings`, {
+      headers: {
+        apikey: cfg.supabaseAnonKey
+      }
+    });
+    if (!response.ok) return;
+
+    const settings = await response.json();
+    const googleEnabled = Boolean(settings?.external?.google);
+    refs.googleSignInBtn.disabled = !googleEnabled;
+
+    if (!googleEnabled) {
+      refs.googleSignInBtn.title = "Google provider is disabled in Supabase";
+      setStatus("Google OAuth is disabled in Supabase. Enable it in Auth Providers.", true);
+    } else {
+      refs.googleSignInBtn.title = "";
+    }
+  } catch (_) {
+    // Keep UI functional even if settings endpoint is unavailable.
+  }
+}
+
 function publicImageUrl(path) {
   if (!path) return "";
   return supabase.storage.from(imageBucket).getPublicUrl(path).data.publicUrl;
@@ -371,6 +395,8 @@ async function main() {
   }
 
   supabase = createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+
+  await configureOAuthButtons();
 
   const oauthError = readOAuthErrorFromUrl();
   if (oauthError) {
