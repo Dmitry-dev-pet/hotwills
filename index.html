@@ -11,16 +11,28 @@
   <script src="js/theme.js"></script>
 </head>
 <body>
-  <div class="authbar">
-    <input type="email" id="authEmail" class="auth-input" placeholder="email@example.com" autocomplete="username">
-    <input type="password" id="authPassword" class="auth-input" placeholder="password" autocomplete="current-password">
-    <button type="button" id="authSignInBtn" data-t="signIn">Войти</button>
-    <button type="button" id="authSignUpBtn" data-t="signUp">Регистрация</button>
-    <button type="button" id="authGoogleBtn" data-t="signInGoogle">Google</button>
-    <span class="bar-spacer"></span>
-    <span class="auth-user" id="authUser">anonymous</span>
-    <button type="button" id="authSignOutBtn" data-t="signOut" style="display:none">Выйти</button>
-    <span class="auth-status" id="authStatus"></span>
+  <div class="top-header">
+    <a class="top-header-brand" href="./">Hotwills</a>
+    <div class="top-header-actions">
+      <a class="top-header-link" href="https://github.com/Dmitry-dev-pet/hotwills" target="_blank" rel="noopener">GitHub</a>
+      <details class="auth-menu">
+        <summary class="auth-menu-trigger" aria-label="Account">👤</summary>
+        <div class="auth-menu-panel">
+          <div class="auth-menu-userline">
+            <span class="auth-user" id="authUser">anonymous</span>
+            <button type="button" id="authSignOutBtn" data-t="signOut" style="display:none">Выйти</button>
+          </div>
+          <input type="email" id="authEmail" class="auth-input" placeholder="email@example.com" autocomplete="username">
+          <input type="password" id="authPassword" class="auth-input" placeholder="password" autocomplete="current-password">
+          <div class="auth-menu-buttons">
+            <button type="button" id="authSignInBtn" data-t="signIn">Войти</button>
+            <button type="button" id="authSignUpBtn" data-t="signUp">Регистрация</button>
+            <button type="button" id="authGoogleBtn" data-t="signInGoogle">Google</button>
+          </div>
+          <span class="auth-status" id="authStatus"></span>
+        </div>
+      </details>
+    </div>
   </div>
 
   <div class="toolbar">

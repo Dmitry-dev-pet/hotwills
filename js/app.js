@@ -133,8 +133,15 @@ document.getElementById('modalNext').addEventListener('click', (e) => { e.stopPr
 document.getElementById('modalOverlay').addEventListener('click', (e) => {
   if (e.target.id === 'modalOverlay') closeModal();
 });
+document.addEventListener('click', (e) => {
+  const authMenu = document.querySelector('.auth-menu');
+  if (!authMenu || !authMenu.open) return;
+  if (!authMenu.contains(e.target)) authMenu.removeAttribute('open');
+});
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
+    const authMenu = document.querySelector('.auth-menu');
+    if (authMenu?.open) authMenu.removeAttribute('open');
     if (document.getElementById('yearModalOverlay').classList.contains('show')) closeYearModal();
     else closeModal();
   }
