@@ -172,16 +172,16 @@ async function uploadImageFilesToCloud(fileList) {
 }
 
 function setAuthUi() {
-  const googleBtn = document.getElementById('authGoogleBtn');
+  const signInBtn = document.getElementById('authSignInBtn');
   const signOutBtn = document.getElementById('authSignOutBtn');
   const userEl = document.getElementById('authUser');
 
-  if (!googleBtn || !signOutBtn || !userEl) return;
+  if (!signInBtn || !signOutBtn || !userEl) return;
 
   userEl.textContent = cloudUser ? (cloudUser.email || cloudUser.id) : t('anonymous');
-  signOutBtn.style.display = cloudUser ? '' : 'none';
+  signOutBtn.disabled = !cloudUser;
 
-  googleBtn.onclick = async () => {
+  signInBtn.onclick = async () => {
     const redirectTo = `${location.origin}${location.pathname}`;
     const { error } = await cloudClient.auth.signInWithOAuth({
       provider: 'google',
@@ -198,10 +198,10 @@ function setAuthUi() {
 }
 
 function setGoogleButtonState(googleEnabled) {
-  const googleBtn = document.getElementById('authGoogleBtn');
-  if (!googleBtn) return;
-  googleBtn.disabled = !googleEnabled;
-  googleBtn.title = googleEnabled ? '' : t('authGoogleDisabled');
+  const signInBtn = document.getElementById('authSignInBtn');
+  if (!signInBtn) return;
+  signInBtn.disabled = !googleEnabled;
+  signInBtn.title = googleEnabled ? '' : t('authGoogleDisabled');
 }
 
 async function refreshGoogleProviderState() {
