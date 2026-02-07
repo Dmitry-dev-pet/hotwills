@@ -7,8 +7,9 @@ const CONFIG = {
     SORT_KEY: 'mbx_sortKey',
     SORT_DESC: 'mbx_sortDesc',
     MODE: 'mbx_viewMode',
+    INFO_TRANSPOSE: 'mbx_infographicTranspose',
     FAVORITES: 'mbx_favorites',
-    MIGRATE: { sortKey: 'sortKey', sortDesc: 'sortDesc', viewMode: 'viewMode' }
+    MIGRATE: { sortKey: 'sortKey', sortDesc: 'sortDesc', viewMode: 'viewMode', infoTranspose: 'infographicTranspose' }
   },
   ROW_KEYS: ['name', 'year', 'code', 'image', 'link'],
   SORT_KEYS: ['name', 'code', 'year']
@@ -23,6 +24,7 @@ let modalIndex = -1;
 let searchQuery = '';
 let favoritesFilter = false;
 let currentMode = 'gallery';
+let infographicTranspose = false;
 
 // ─── Storage ────────────────────────────────────────────────────────────
 function getSortPrefs() {
@@ -59,6 +61,21 @@ function getMode() {
 function setMode(mode) {
   try {
     localStorage.setItem(CONFIG.LS.MODE, mode);
+  } catch (e) {}
+}
+
+function getInfographicTranspose() {
+  try {
+    const raw = localStorage.getItem(CONFIG.LS.INFO_TRANSPOSE) ?? localStorage.getItem(CONFIG.LS.MIGRATE.infoTranspose);
+    return raw === 'true';
+  } catch (e) {
+    return false;
+  }
+}
+
+function setInfographicTranspose(value) {
+  try {
+    localStorage.setItem(CONFIG.LS.INFO_TRANSPOSE, String(Boolean(value)));
   } catch (e) {}
 }
 

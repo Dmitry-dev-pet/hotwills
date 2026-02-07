@@ -178,6 +178,12 @@
   font-size: 22px;
 }
 
+#transposeBtn.active {
+  background: var(--mode-toggle-bg);
+  color: var(--mode-toggle-text);
+  border-color: var(--mode-toggle-bg);
+}
+
 .gallery-empty {
   color: var(--text-dim);
   padding: 48px 32px;
@@ -391,6 +397,25 @@
   min-width: min-content;
 }
 
+.infographic-grid.transposed .infographic-col-names {
+  flex: 0 0 56px;
+  min-width: 56px;
+}
+
+.infographic-grid.transposed .infographic-cell.model-name {
+  justify-content: center;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  text-align: left;
+  padding: 4px 2px;
+  font-size: 10px;
+}
+
+.infographic-grid.transposed .infographic-cell.year-header {
+  justify-content: center;
+  font-weight: 600;
+}
+
 .infographic-col {
   display: flex;
   flex-direction: column;
@@ -484,6 +509,20 @@
   opacity: 0.85;
 }
 
+.infographic-grid.transposed .infographic-cell.year-hover {
+  background: var(--infographic-hover);
+}
+
+.infographic-grid.transposed .infographic-cell.filled.year-hover,
+.infographic-grid.transposed .infographic-cell.selected-year.filled {
+  background: var(--link);
+  opacity: 1;
+}
+
+.infographic-grid.transposed .infographic-cell.selected-year {
+  background: var(--infographic-selected);
+}
+
 .infographic-chart {
   display: flex;
   flex-direction: row;
@@ -564,6 +603,65 @@
   padding-top: 2px;
   line-height: 1;
   text-align: center;
+}
+
+.infographic-chart.transposed {
+  display: block;
+  padding: 8px 10px;
+}
+
+.infographic-chart-top {
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+
+.infographic-chart-rows {
+  display: grid;
+  gap: 4px;
+}
+
+.infographic-chart-row {
+  display: grid;
+  grid-template-columns: 34px 1fr 34px;
+  align-items: center;
+  gap: 6px;
+  border-radius: 3px;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+
+.infographic-chart-row:hover {
+  background: var(--infographic-hover);
+}
+
+.infographic-chart-row.selected {
+  background: var(--infographic-selected);
+}
+
+.infographic-chart-row-year {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.infographic-chart-row-track {
+  height: 12px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: var(--input-bg);
+  overflow: hidden;
+}
+
+.infographic-chart-row-bar {
+  height: 100%;
+  min-width: 2px;
+}
+
+.infographic-chart-row-value {
+  text-align: right;
+  font-size: 10px;
+  color: var(--text-muted);
 }
 
 .infographic-popover {
