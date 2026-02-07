@@ -486,10 +486,6 @@
   background: var(--table-header-bg);
 }
 
-.infographic-cell.model-name.model-interactive {
-  cursor: pointer;
-}
-
 .infographic-cell.infographic-col-header {
   justify-content: flex-start;
   font-weight: 600;
@@ -511,23 +507,6 @@
 .infographic-cell.filled {
   background: var(--link);
   opacity: 0.85;
-}
-
-.infographic-cell.model-hover {
-  background: var(--infographic-hover);
-}
-
-.infographic-cell.model-name.model-hover {
-  background: var(--infographic-selected);
-}
-
-.infographic-cell.filled.model-hover {
-  background: var(--link);
-  opacity: 1;
-}
-
-.infographic-cell.year-header.model-year-hit {
-  background: var(--infographic-selected);
 }
 
 .infographic-grid.transposed .infographic-cell.year-hover {
@@ -609,13 +588,6 @@
   opacity: 0.9;
 }
 
-.infographic-chart-bar.model-hover {
-  opacity: 1;
-  outline: 1px solid var(--text);
-  outline-offset: -1px;
-  z-index: 1;
-}
-
 .infographic-chart-bar.selected {
   opacity: 1;
   outline: 2px solid var(--text);
@@ -661,10 +633,6 @@
 }
 
 .infographic-chart-row:hover {
-  background: var(--infographic-hover);
-}
-
-.infographic-chart-row.model-hover {
   background: var(--infographic-hover);
 }
 
@@ -738,69 +706,4 @@
 .modal-year {
   max-width: 90vw;
   max-height: 85vh;
-}
-
-#yearModalGallery.model-years-mode {
-  display: block;
-}
-
-.model-years-panel {
-  display: grid;
-  gap: 12px;
-}
-
-.model-years-head {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.model-years-thumb {
-  width: 84px;
-  height: 64px;
-  object-fit: contain;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--input-bg);
-}
-
-.model-years-meta {
-  display: grid;
-  gap: 4px;
-}
-
-.model-years-code {
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.model-years-range {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.model-years-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.model-year-btn {
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  background: var(--input-bg);
-  color: var(--text);
-  padding: 6px 10px;
-  font-size: 12px;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.model-year-btn:hover {
-  background: var(--btn-hover);
-}
-
-.model-years-empty {
-  font-size: 12px;
-  color: var(--text-muted);
 }

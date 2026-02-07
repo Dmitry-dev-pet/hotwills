@@ -63,70 +63,6 @@ function hideYearPopover() {
   }, 80);
 }
 
-function getYearsInInfographicRange(range) {
-  if (!range) return [];
-  const minYear = INFOGRAPHIC_YEARS[0];
-  const maxYear = INFOGRAPHIC_YEARS[INFOGRAPHIC_YEARS.length - 1];
-  const start = Math.max(minYear, range.start);
-  const end = Math.min(maxYear, range.end);
-  if (start > end) return [];
-  const years = [];
-  for (let y = start; y <= end; y++) years.push(y);
-  return years;
-}
-
-function setModelHoverStyles(grid, chart, modelIndex, years, on, transpose) {
-  if (!grid || modelIndex == null) return;
-
-  grid.querySelectorAll(`[data-model-cell="${modelIndex}"]`).forEach((el) => {
-    el.classList.toggle('model-hover', on);
-  });
-
-  years.forEach((year) => {
-    grid.querySelectorAll(`[data-year-label="${year}"]`).forEach((el) => {
-      el.classList.toggle('model-year-hit', on);
-    });
-    if (!chart) return;
-    if (transpose) {
-      const row = chart.querySelector(`.infographic-chart-row[data-year="${year}"]`);
-      if (row) row.classList.toggle('model-hover', on);
-      return;
-    }
-    const bar = chart.querySelector(`.infographic-chart-bar[data-year="${year}"]`);
-    if (bar) bar.classList.toggle('model-hover', on);
-  });
-}
-
-function showModelYearsModal(model, years, yearItemsMap) {
-  const title = t('modelYearsTitle', { model: model.name || '—' });
-  const gallery = document.getElementById('yearModalGallery');
-  gallery.classList.add('model-years-mode');
-  const yearsMarkup = years.length > 0
-    ? years.map((year) => `<button type="button" class="model-year-btn" data-year="${year}">${year}</button>`).join('')
-    : `<div class="model-years-empty">${t('modelYearsEmpty')}</div>`;
-  gallery.innerHTML = `
-    <div class="model-years-panel">
-      <div class="model-years-head">
-        <img class="model-years-thumb" src="${escapeHtml(imgPath(model.image || ''))}" alt="${escapeHtml(model.name || '')}">
-        <div class="model-years-meta">
-          <div class="model-years-code">${escapeHtml(model.code || '')}</div>
-          <div class="model-years-range">${escapeHtml(model.year || '—')}</div>
-        </div>
-      </div>
-      <div class="model-years-list">${yearsMarkup}</div>
-    </div>
-  `;
-  gallery.querySelectorAll('.model-year-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const year = Number(btn.dataset.year);
-      if (!Number.isFinite(year)) return;
-      showYearModal(year, getItemsForYear(year, yearItemsMap));
-    });
-  });
-  document.getElementById('yearModalTitle').textContent = title;
-  document.getElementById('yearModalOverlay').classList.add('show');
-}
-
 function setGridYearHover(grid, year, on, transpose) {
   if (!grid) return;
   if (!transpose) {
@@ -209,36 +145,16 @@ function renderInfographic() {
   const chartColors = getChartColors();
   const counts = INFOGRAPHIC_YEARS.map((y) => getItemsForYear(y, yearItemsMap).length);
   const maxCount = Math.max(1, ...counts);
-  const rangeCache = new Map();
-  const getModelRange = (item) => {
-    const key = item.year || '';
-    if (!rangeCache.has(key)) rangeCache.set(key, parseYearRange(key));
-    return rangeCache.get(key);
-  };
-  const modelRanges = models.map((item) => getModelRange(item));
-  const modelYears = modelRanges.map((range) => getYearsInInfographicRange(range));
 
   if (!transpose) {
     const colNames = document.createElement('div');
     colNames.className = 'infographic-col infographic-col-names';
     colNames.innerHTML = '<div class="infographic-cell model-name infographic-col-header">' + t('infographicModelCol') + '</div>';
-    models.forEach((item, modelIndex) => {
-      const years = modelYears[modelIndex];
+    models.forEach((item) => {
       const nameCell = document.createElement('div');
-      nameCell.className = 'infographic-cell model-name model-interactive';
-      nameCell.dataset.modelCell = modelIndex;
+      nameCell.className = 'infographic-cell model-name';
       nameCell.textContent = (item.name || '—').slice(0, 25);
       nameCell.title = item.name || '';
-      nameCell.addEventListener('mouseenter', () => {
-        document.getElementById('infographicPopover')?.classList.remove('show');
-        setModelHoverStyles(grid, chart, modelIndex, years, true, false);
-      });
-      nameCell.addEventListener('mouseleave', () => {
-        setModelHoverStyles(grid, chart, modelIndex, years, false, false);
-      });
-      nameCell.addEventListener('click', () => {
-        showModelYearsModal(item, years, yearItemsMap);
-      });
       colNames.appendChild(nameCell);
     });
     grid.appendChild(colNames);
@@ -251,16 +167,14 @@ function renderInfographic() {
 
       const headerCell = document.createElement('div');
       headerCell.className = 'infographic-cell year-header';
-      headerCell.dataset.yearLabel = year;
       headerCell.textContent = String(year).slice(2);
       col.appendChild(headerCell);
 
       const itemsForYear = getItemsForYear(year, yearItemsMap);
-      models.forEach((item, modelIndex) => {
+      models.forEach((item) => {
         const inRange = itemsForYear.includes(item);
         const cell = document.createElement('div');
         cell.className = 'infographic-cell' + (inRange ? ' filled' : '');
-        cell.dataset.modelCell = modelIndex;
         col.appendChild(cell);
       });
 
@@ -353,7 +267,6 @@ function renderInfographic() {
     yearCell.textContent = String(year).slice(2);
     yearCell.title = String(year);
     yearCell.dataset.yearCell = year;
-    yearCell.dataset.yearLabel = year;
     yearCell.addEventListener('mouseenter', (e) => {
       if (popoverHideTimer) { clearTimeout(popoverHideTimer); popoverHideTimer = null; }
       showYearPopover(year, e, yearItemsMap);
@@ -373,36 +286,30 @@ function renderInfographic() {
   });
   grid.appendChild(colYears);
 
-  models.forEach((item, modelIndex) => {
-    const years = modelYears[modelIndex];
+  const rangeCache = new Map();
+  const getModelRange = (item) => {
+    const key = item.year || '';
+    if (!rangeCache.has(key)) rangeCache.set(key, parseYearRange(key));
+    return rangeCache.get(key);
+  };
+
+  models.forEach((item) => {
     const col = document.createElement('div');
     col.className = 'infographic-col';
     col.style.cursor = 'pointer';
 
     const headerCell = document.createElement('div');
-    headerCell.className = 'infographic-cell model-name model-interactive';
-    headerCell.dataset.modelCell = modelIndex;
+    headerCell.className = 'infographic-cell model-name';
     headerCell.textContent = (item.name || '—').slice(0, 18);
     headerCell.title = item.name || '';
-    headerCell.addEventListener('mouseenter', () => {
-      document.getElementById('infographicPopover')?.classList.remove('show');
-      setModelHoverStyles(grid, chart, modelIndex, years, true, true);
-    });
-    headerCell.addEventListener('mouseleave', () => {
-      setModelHoverStyles(grid, chart, modelIndex, years, false, true);
-    });
-    headerCell.addEventListener('click', () => {
-      showModelYearsModal(item, years, yearItemsMap);
-    });
     col.appendChild(headerCell);
 
-    const range = modelRanges[modelIndex];
+    const range = getModelRange(item);
     INFOGRAPHIC_YEARS.forEach((year) => {
       const cell = document.createElement('div');
       const inRange = isYearInRange(year, range);
       cell.className = 'infographic-cell' + (inRange ? ' filled' : '');
       cell.dataset.yearCell = year;
-      cell.dataset.modelCell = modelIndex;
 
       cell.addEventListener('mouseenter', (e) => {
         if (popoverHideTimer) { clearTimeout(popoverHideTimer); popoverHideTimer = null; }
@@ -503,7 +410,6 @@ function showYearModal(year, items) {
   }
   document.getElementById('yearModalTitle').textContent = t('yearModalTitle', { year });
   const gallery = document.getElementById('yearModalGallery');
-  gallery.classList.remove('model-years-mode');
   gallery.innerHTML = '';
   items.forEach((item) => {
     const imgFile = item.image || '';
