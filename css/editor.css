@@ -1,0 +1,117 @@
+/* Editor-specific: table + toast */
+.table-wrap {
+  flex: 1;
+  overflow: auto;
+  padding: 12px;
+  -webkit-overflow-scrolling: touch;
+}
+
+table {
+  width: 100%;
+  min-width: 480px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th, td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--table-border);
+}
+
+th {
+  background: var(--table-header-bg);
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+td input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 13px;
+  transition: border-color var(--transition-fast);
+}
+
+td input:focus {
+  outline: none;
+  border-color: var(--input-focus);
+}
+
+.preview img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 4px;
+  display: block;
+}
+
+.preview .no-img {
+  width: 48px;
+  height: 48px;
+  background: var(--preview-placeholder);
+  border-radius: 4px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--preview-placeholder-text);
+}
+
+.preview .no-img.show { display: flex !important; }
+
+.toast {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(300px, calc(100vw - 32px));
+  padding: 12px 20px;
+  background: var(--toast-bg);
+  color: var(--toast-text);
+  border-radius: 4px;
+  font-size: 14px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.toast.show { opacity: 1; }
+
+.table-empty {
+  padding: 48px 32px;
+  text-align: center;
+  vertical-align: middle;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.table-empty .empty-load-btn {
+  padding: 12px 24px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 15px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.table-empty .empty-load-btn:hover {
+  background: var(--btn-hover);
+}
+
+tr.search-hidden { display: none; }
+
+@media (min-width: 768px) {
+  .table-wrap { padding: 20px; }
+  th, td { padding: 10px 12px; }
+  .preview img, .preview .no-img { width: 60px; height: 60px; }
+}

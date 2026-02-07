@@ -1,0 +1,82 @@
+/* Light theme */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: rgb(255, 255, 255);
+  --text: rgb(34, 34, 34);
+  --text-muted: rgb(102, 102, 102);
+  --text-dim: rgb(136, 136, 136);
+  --border: rgb(232, 232, 232);
+  --border-strong: rgb(204, 204, 204);
+  --bar-bg: rgb(250, 250, 250);
+  --card-bg: rgb(250, 250, 250);
+  --card-border: rgb(232, 232, 232);
+  --input-bg: rgb(255, 255, 255);
+  --input-border: rgb(224, 224, 224);
+  --input-focus: rgb(153, 153, 153);
+  --btn-bg: rgb(255, 255, 255);
+  --btn-hover: rgb(245, 245, 245);
+  --link: rgb(0, 102, 204);
+  --modal-bg: rgb(255, 255, 255);
+  --modal-close-bg: rgb(238, 238, 238);
+  --modal-close-hover: rgb(221, 221, 221);
+  --modal-nav-bg: rgba(255, 255, 255, 0.9);
+  --modal-nav-hover: rgb(255, 255, 255);
+  --toast-bg: rgb(51, 51, 51);
+  --toast-text: rgb(255, 255, 255);
+  --overlay: rgba(0, 0, 0, 0.5);
+  --shadow: rgba(0, 0, 0, 0.2);
+  --preview-placeholder: rgb(238, 238, 238);
+  --preview-placeholder-text: rgb(153, 153, 153);
+  --table-border: rgb(238, 238, 238);
+  --table-header-bg: rgb(250, 250, 250);
+  --mode-toggle-bg: rgb(34, 34, 34);
+  --mode-toggle-text: rgb(255, 255, 255);
+  --mode-toggle-hover-bg: rgb(51, 51, 51);
+  --infographic-hover: rgba(0, 102, 204, 0.2);
+  --infographic-selected: rgba(0, 102, 204, 0.3);
+  --chart-color-min: 173, 216, 230;
+  --chart-color-max: 0, 102, 204;
+  --transition-fast: 0.15s ease;
+}
+
+/* Dark theme */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: rgb(26, 26, 26);
+  --text: rgb(224, 224, 224);
+  --text-muted: rgb(153, 153, 153);
+  --text-dim: rgb(136, 136, 136);
+  --border: rgb(51, 51, 51);
+  --border-strong: rgb(68, 68, 68);
+  --bar-bg: rgb(37, 37, 37);
+  --card-bg: rgb(37, 37, 37);
+  --card-border: rgb(51, 51, 51);
+  --input-bg: rgb(26, 26, 26);
+  --input-border: rgb(68, 68, 68);
+  --input-focus: rgb(100, 100, 100);
+  --btn-bg: rgb(51, 51, 51);
+  --btn-hover: rgb(64, 64, 64);
+  --link: rgb(106, 158, 255);
+  --modal-bg: rgb(37, 37, 37);
+  --modal-close-bg: rgb(51, 51, 51);
+  --modal-close-hover: rgb(64, 64, 64);
+  --modal-nav-bg: rgba(40, 40, 40, 0.95);
+  --modal-nav-hover: rgb(60, 60, 60);
+  --toast-bg: rgb(51, 51, 51);
+  --toast-text: rgb(255, 255, 255);
+  --overlay: rgba(0, 0, 0, 0.6);
+  --shadow: rgba(0, 0, 0, 0.4);
+  --preview-placeholder: rgb(51, 51, 51);
+  --preview-placeholder-text: rgb(102, 102, 102);
+  --table-border: rgb(51, 51, 51);
+  --table-header-bg: rgb(37, 37, 37);
+  --mode-toggle-bg: rgb(224, 224, 224);
+  --mode-toggle-text: rgb(26, 26, 26);
+  --mode-toggle-hover-bg: rgb(255, 255, 255);
+  --infographic-hover: rgba(106, 158, 255, 0.25);
+  --infographic-selected: rgba(106, 158, 255, 0.35);
+  --chart-color-min: 100, 140, 200;
+  --chart-color-max: 106, 158, 255;
+  --transition-fast: 0.15s ease;
+}

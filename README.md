@@ -2,9 +2,16 @@
 
 Static multiuser catalog for the Yesteryear dataset.
 
-- Frontend: static files (`index.html`, `app.js`, `styles.css`) for GitHub Pages
+- Frontend: static files (`index.html`, `css/*`, `js/*`) for GitHub Pages
 - Auth + DB + Realtime + Storage: Supabase
 - Source parser: downloads upstream `data.json` and all model images
+
+UI modes:
+- Catalog
+- Editor
+- Infographic
+
+The UI is based on the original yesteryear layout, with cloud auth/sync added.
 
 ## 1. Supabase setup
 

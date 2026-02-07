@@ -1,105 +1,133 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Hotwills Collaborative Catalog</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Каталог</title>
+  <link rel="stylesheet" href="css/theme-colors.css">
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/index.css">
+  <link rel="stylesheet" href="css/editor.css">
+  <script src="js/theme.js"></script>
 </head>
 <body>
-  <main class="app-shell">
-    <header class="topbar">
-      <h1>Hotwills Collaborative Catalog</h1>
-      <p>GitHub Pages frontend + Supabase auth/realtime/storage</p>
-    </header>
+  <div class="authbar">
+    <input type="email" id="authEmail" class="auth-input" placeholder="email@example.com" autocomplete="username">
+    <input type="password" id="authPassword" class="auth-input" placeholder="password" autocomplete="current-password">
+    <button type="button" id="authSignInBtn" data-t="signIn">Войти</button>
+    <button type="button" id="authSignUpBtn" data-t="signUp">Регистрация</button>
+    <button type="button" id="authGoogleBtn" data-t="signInGoogle">Google</button>
+    <span class="bar-spacer"></span>
+    <span class="auth-user" id="authUser">anonymous</span>
+    <button type="button" id="authSignOutBtn" data-t="signOut" style="display:none">Выйти</button>
+    <span class="auth-status" id="authStatus"></span>
+  </div>
 
-    <section id="configNotice" class="card warning hidden">
-      <h2>Supabase config required</h2>
-      <p>Fill <code>/Users/dmitry/Project/hotwills/config.js</code> with your project URL and anon key.</p>
-    </section>
+  <div class="toolbar">
+    <select id="modeSelect" class="mode-select">
+      <option value="gallery" data-t="catalog">Каталог</option>
+      <option value="editor" data-t="editor">Редактор</option>
+      <option value="infographic" data-t="infographic">Инфографика</option>
+    </select>
+    <input type="file" id="fileInput" accept=".json" style="display:none">
+    <select id="sortSelect">
+      <option value="name" data-t="sortByName">По названию</option>
+      <option value="code" data-t="sortByCode">По коду</option>
+      <option value="year" data-t="sortByYear">По году</option>
+    </select>
+    <input type="text" id="searchInput" class="toolbar-search" autocomplete="off">
+    <button type="button" id="favoritesBtn" class="mode-gallery" title="Favorites">♡</button>
+    <button type="button" id="addPhotoBtn" class="mode-editor" data-t="addPhoto">Добавить фото</button>
+    <input type="file" id="addPhotoInput" accept="image/*" multiple style="display:none">
+    <button type="button" id="copyBtn" class="mode-editor" data-t="copyJson">Копировать JSON</button>
+    <button type="button" id="saveBtn" class="mode-editor" data-t="saveJson">Скачать JSON</button>
+    <button type="button" id="cloudSaveBtn" class="mode-editor" data-t="saveCloud">Сохранить в облако</button>
+    <button type="button" id="cloudReloadBtn" data-t="reloadCloud">Обновить</button>
+    <span class="bar-spacer"></span>
+    <select id="themeSelect">
+      <option value="light">☀</option>
+      <option value="dark">🌙</option>
+    </select>
+    <select id="langSelect">
+      <option value="ru">RU</option>
+      <option value="en">EN</option>
+      <option value="pt">PT</option>
+    </select>
+  </div>
 
-    <section id="authCard" class="card">
-      <h2>Sign in</h2>
-      <form id="authForm" class="grid two-cols">
-        <label>
-          Email
-          <input id="emailInput" type="email" required autocomplete="username" />
-        </label>
-        <label>
-          Password
-          <input id="passwordInput" type="password" required autocomplete="current-password" />
-        </label>
-        <div class="actions full-row">
-          <button type="submit" id="signInBtn">Sign in</button>
-          <button type="button" id="signUpBtn" class="muted">Sign up</button>
-          <button type="button" id="googleSignInBtn" class="oauth-google">Sign in with Google</button>
-        </div>
-      </form>
-      <p class="hint">For first login: sign up (email/password) or use Google OAuth after provider setup in Supabase.</p>
-    </section>
-
-    <section id="appCard" class="card hidden">
-      <div class="toolbar">
-        <input id="searchInput" type="search" placeholder="Search by name, code, year" />
-        <button id="refreshBtn" type="button" class="muted">Refresh</button>
-        <button id="signOutBtn" type="button" class="danger">Sign out</button>
+  <div id="viewGallery" class="view">
+    <div class="main">
+      <div class="gallery-container">
+        <div class="gallery" id="gallery"></div>
       </div>
-
-      <h2>Add model</h2>
-      <form id="createForm" class="grid four-cols">
-        <label>
-          Name
-          <input id="newName" type="text" required />
-        </label>
-        <label>
-          Year
-          <input id="newYear" type="text" required placeholder="1966-1974" />
-        </label>
-        <label>
-          Code
-          <input id="newCode" type="text" required placeholder="Y-13" />
-        </label>
-        <label>
-          Link
-          <input id="newLink" type="url" placeholder="https://..." />
-        </label>
-        <label>
-          Existing image path
-          <input id="newImageFile" type="text" placeholder="0.jpg or user/file.jpg" />
-        </label>
-        <label class="full-row">
-          Image (optional upload)
-          <input id="newImage" type="file" accept="image/*" />
-        </label>
-        <div class="actions full-row">
-          <button type="submit">Create</button>
+    </div>
+    <div class="modal-overlay" id="modalOverlay">
+      <button type="button" class="modal-nav modal-nav-left" id="modalPrev">‹</button>
+      <button type="button" class="modal-nav modal-nav-right" id="modalNext">›</button>
+      <div class="modal" id="modal">
+        <div class="modal-header">
+          <div class="modal-title" id="modalTitle"></div>
+          <button type="button" class="modal-close" id="modalClose">×</button>
         </div>
-      </form>
-
-      <h2>Models</h2>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Preview</th>
-              <th>Name</th>
-              <th>Year</th>
-              <th>Code</th>
-              <th>Image file</th>
-              <th>Link</th>
-              <th>Owner</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="modelsBody"></tbody>
-        </table>
+        <div class="modal-body">
+          <div id="modalContent"></div>
+        </div>
       </div>
-    </section>
+    </div>
+  </div>
 
-    <p id="status" class="status"></p>
-  </main>
+  <div id="viewInfographic" class="view hidden">
+    <div class="infographic-wrap">
+      <div class="infographic-content">
+        <div class="infographic-grid" id="infographicGrid"></div>
+        <div class="infographic-chart" id="infographicChart"></div>
+      </div>
+      <div class="infographic-popover" id="infographicPopover"></div>
+    </div>
+  </div>
+
+  <div id="viewEditor" class="view hidden">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th data-t="preview">Превью</th>
+            <th data-t="name">Название</th>
+            <th data-t="year">Год</th>
+            <th data-t="code">Код</th>
+            <th data-t="file">Файл</th>
+            <th data-t="link">Ссылка</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="yearModalOverlay" aria-hidden="true">
+    <div class="modal modal-year" id="yearModal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="yearModalTitle">1965</h3>
+        <button type="button" class="modal-close" id="yearModalClose">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="gallery-container">
+          <div class="gallery" id="yearModalGallery"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
 
   <script src="config.js"></script>
-  <script type="module" src="app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/translations.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/gallery.js"></script>
+  <script src="js/editor.js"></script>
+  <script src="js/infographic.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
