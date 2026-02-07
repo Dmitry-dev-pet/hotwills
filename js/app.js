@@ -64,6 +64,16 @@ function showToast(msg) {
   setTimeout(() => el.classList.remove('show'), 2200);
 }
 
+function formatCloudError(err) {
+  if (!err) return 'unknown error';
+  const parts = [];
+  if (err.message) parts.push(err.message);
+  if (err.details) parts.push(err.details);
+  if (err.hint) parts.push('hint: ' + err.hint);
+  if (err.code) parts.push('code: ' + err.code);
+  return parts.join(' | ') || String(err);
+}
+
 function switchToGallery() {
   history.replaceState(null, '', location.pathname + location.search);
   if (currentMode === 'editor') {
@@ -214,7 +224,11 @@ document.getElementById('cloudSaveBtn').addEventListener('click', async () => {
   const rows = collectFromDOM();
   const result = await saveModelsToCloud(rows);
   if (!result.ok) {
-    showToast(t('cloudSaveFailed') + ': ' + (result.error?.message || 'unknown error'));
+    const msg = t('cloudSaveFailed') + ': ' + formatCloudError(result.error);
+    console.error('cloudSave failed', result.error);
+    if (typeof cloudStatus === 'function') cloudStatus(msg, true);
+    showToast(msg);
+    alert(msg);
     return;
   }
   loadData(rows);

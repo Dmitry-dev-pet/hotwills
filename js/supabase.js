@@ -36,12 +36,19 @@ function mapRowToModel(row) {
   };
 }
 
+function normalizeImagePathForUser(imagePath, userId) {
+  const raw = (imagePath || '').trim();
+  if (!raw) return '';
+  if (raw.includes('/')) return raw;
+  return userId ? `${userId}/${raw}` : raw;
+}
+
 function mapModelToRow(model, userId) {
   return {
     name: (model.name || '').trim(),
     year: (model.year || '').trim(),
     code: (model.code || '').trim(),
-    image_file: (model.image || '').trim(),
+    image_file: normalizeImagePathForUser(model.image, userId),
     source_link: (model.link || '').trim() || null,
     created_by: userId || null
   };

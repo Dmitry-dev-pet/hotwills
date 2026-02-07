@@ -43,6 +43,10 @@ for each row execute function public.set_updated_at();
 -- RLS
 alter table public.models enable row level security;
 
+-- Required grants for authenticated API role (RLS still governs row access)
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on table public.models to authenticated;
+
 drop policy if exists "models_select_authenticated" on public.models;
 drop policy if exists "models_insert_authenticated" on public.models;
 drop policy if exists "models_update_authenticated" on public.models;
@@ -100,10 +104,7 @@ create policy "model_images_public_read"
 on storage.objects
 for select
 to public
-using (
-  bucket_id = 'model-images'
-  and split_part(name, '/', 1) = (select auth.uid())::text
-);
+using (bucket_id = 'model-images');
 
 create policy "model_images_auth_insert"
 on storage.objects

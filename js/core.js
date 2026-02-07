@@ -161,7 +161,13 @@ function tryLoadDataJson() {
       return Array.isArray(arr) ? arr : [];
     });
 
-  if (typeof fetchModelsFromCloud === 'function' && typeof isCloudReady === 'function' && isCloudReady()) {
+  const hasCloudUser = typeof getCloudUser === 'function' && Boolean(getCloudUser());
+  if (
+    typeof fetchModelsFromCloud === 'function'
+    && typeof isCloudReady === 'function'
+    && isCloudReady()
+    && hasCloudUser
+  ) {
     return fetchModelsFromCloud().catch(() => fetchLocal());
   }
   return fetchLocal();
