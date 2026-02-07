@@ -30,7 +30,7 @@
       <option value="infographic" data-t="infographic">Инфографика</option>
     </select>
     <input type="file" id="fileInput" accept=".json" style="display:none">
-    <button type="button" id="loadJsonBtn" data-t="loadJson">Загрузить JSON</button>
+    <button type="button" id="loadJsonBtn" data-t="loadJson" onclick="document.getElementById('fileInput').click()">Загрузить JSON</button>
     <select id="sortSelect">
       <option value="name" data-t="sortByName">По названию</option>
       <option value="code" data-t="sortByCode">По коду</option>
