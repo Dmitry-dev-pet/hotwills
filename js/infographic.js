@@ -97,32 +97,52 @@ function setModelHoverStyles(grid, chart, modelIndex, years, on, transpose) {
   });
 }
 
-function showModelYearsModal(model, years, yearItemsMap) {
+function showModelYearsModal(model, years) {
   const title = t('modelYearsTitle', { model: model.name || '—' });
   const gallery = document.getElementById('yearModalGallery');
-  gallery.classList.add('model-years-mode');
-  const yearsMarkup = years.length > 0
-    ? years.map((year) => `<button type="button" class="model-year-btn" data-year="${year}">${year}</button>`).join('')
-    : `<div class="model-years-empty">${t('modelYearsEmpty')}</div>`;
-  gallery.innerHTML = `
-    <div class="model-years-panel">
-      <div class="model-years-head">
-        <img class="model-years-thumb" src="${escapeHtml(imgPath(model.image || ''))}" alt="${escapeHtml(model.name || '')}">
-        <div class="model-years-meta">
-          <div class="model-years-code">${escapeHtml(model.code || '')}</div>
-          <div class="model-years-range">${escapeHtml(model.year || '—')}</div>
-        </div>
+  gallery.classList.remove('model-years-mode');
+  gallery.innerHTML = '';
+
+  if (years.length === 0) {
+    gallery.innerHTML = `<p class="gallery-empty">${t('modelYearsEmpty')}</p>`;
+    document.getElementById('yearModalTitle').textContent = title;
+    document.getElementById('yearModalOverlay').classList.add('show');
+    return;
+  }
+
+  years.forEach((year) => {
+    const item = { ...model, year: String(year) };
+    const imgFile = item.image || '';
+    const fav = isFavorite(imgFile);
+    const card = document.createElement('div');
+    card.className = 'gallery-card';
+    const imgSrc = imgPath(item.image || '');
+    card.innerHTML = `
+      <button type="button" class="card-fav ${fav ? 'active' : ''}" data-image="${escapeHtml(imgFile)}" title="${t('favorites')}" aria-label="${t('favorites')}">${fav ? '♥' : '♡'}</button>
+      <img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(item.name || '')}" loading="lazy">
+      <div class="gallery-card-body">
+        <div class="gallery-card-code">${escapeHtml(item.code || '')}</div>
+        <div class="gallery-card-name">${escapeHtml(item.name || '—')}</div>
+        <div class="gallery-card-meta">${escapeHtml(item.year || '')}</div>
       </div>
-      <div class="model-years-list">${yearsMarkup}</div>
-    </div>
-  `;
-  gallery.querySelectorAll('.model-year-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const year = Number(btn.dataset.year);
-      if (!Number.isFinite(year)) return;
-      showYearModal(year, getItemsForYear(year, yearItemsMap));
+      ${item.link ? `<div class="gallery-card-link"><a href="${escapeHtml(item.link)}" target="_blank" rel="noopener" title="${t('link')}">↗</a></div>` : ''}
+    `;
+    card.querySelector('.card-fav').addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleFavorite(imgFile);
+      card.querySelector('.card-fav').className = 'card-fav ' + (isFavorite(imgFile) ? 'active' : '');
+      card.querySelector('.card-fav').textContent = isFavorite(imgFile) ? '♥' : '♡';
     });
+    card.addEventListener('click', (e) => {
+      if (!e.target.closest('a') && !e.target.closest('.card-fav')) {
+        const idx = sortedData.indexOf(model);
+        closeYearModal();
+        showGalleryDetail(idx >= 0 ? idx : 0);
+      }
+    });
+    gallery.appendChild(card);
   });
+
   document.getElementById('yearModalTitle').textContent = title;
   document.getElementById('yearModalOverlay').classList.add('show');
 }
@@ -237,7 +257,7 @@ function renderInfographic() {
         setModelHoverStyles(grid, chart, modelIndex, years, false, false);
       });
       nameCell.addEventListener('click', () => {
-        showModelYearsModal(item, years, yearItemsMap);
+        showModelYearsModal(item, years);
       });
       colNames.appendChild(nameCell);
     });
@@ -392,7 +412,7 @@ function renderInfographic() {
       setModelHoverStyles(grid, chart, modelIndex, years, false, true);
     });
     headerCell.addEventListener('click', () => {
-      showModelYearsModal(item, years, yearItemsMap);
+      showModelYearsModal(item, years);
     });
     col.appendChild(headerCell);
 
