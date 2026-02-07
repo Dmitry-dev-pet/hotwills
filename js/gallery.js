@@ -43,7 +43,7 @@ function renderGallery() {
     const fav = isFavorite(imgFile);
     const card = document.createElement('div');
     card.className = 'gallery-card';
-    const imgSrc = CONFIG.IMG_DIR + (item.image || '');
+    const imgSrc = imgPath(item.image || '');
     card.innerHTML = `
       <button type="button" class="card-fav ${fav ? 'active' : ''}" data-image="${escapeHtml(imgFile)}" title="${t('favorites')}" aria-label="${t('favorites')}">${fav ? '♥' : '♡'}</button>
       <img class="gallery-img-lazy" data-src="${escapeHtml(imgSrc)}" alt="${escapeHtml(item.name || '')}">
@@ -86,7 +86,7 @@ function showGalleryDetail(index) {
   document.getElementById('modalTitle').textContent = item.name || '—';
   content.innerHTML = `
     <div class="modal-photo-wrap">
-      <img class="modal-photo" src="${CONFIG.IMG_DIR + (item.image || '')}" alt="${escapeHtml(item.name || '')}">
+      <img class="modal-photo" src="${imgPath(item.image || '')}" alt="${escapeHtml(item.name || '')}">
     </div>
     <div class="modal-data">
       <dl class="modal-info">
