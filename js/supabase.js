@@ -12,6 +12,7 @@ let cloudRealtime = null;
 let cloudOnDataChange = null;
 let cloudOwnerId = null;
 let cloudOwnerOptions = [];
+let cloudOwnersLastError = '';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -233,6 +234,7 @@ function renderOwnerSelect() {
 
 async function refreshOwnerOptions() {
   const ownerSelect = document.getElementById('authOwnerSelect');
+  cloudOwnersLastError = '';
   if (ownerSelect) {
     ownerSelect.disabled = true;
     ownerSelect.innerHTML = `<option value="">${t('catalogOwnerLoading')}</option>`;
@@ -251,7 +253,7 @@ async function refreshOwnerOptions() {
     .limit(5000);
 
   if (error) {
-    cloudStatus(error.message || String(error), true);
+    cloudOwnersLastError = error.message || String(error);
     cloudOwnerOptions = cloudUser?.id ? [cloudUser.id] : [];
     if (!cloudOwnerId || !cloudOwnerOptions.includes(cloudOwnerId)) {
       cloudOwnerId = cloudOwnerOptions[0] || null;
@@ -296,7 +298,17 @@ function setAuthUi() {
   userEl.textContent = cloudUser ? (cloudUser.email || cloudUser.id) : t('anonymous');
   signOutBtn.disabled = !hasUser;
 
-  if (ownerId) {
+  const onlyOwnCatalog = Boolean(
+    hasUser
+    && cloudOwnerOptions.length === 1
+    && cloudOwnerOptions[0] === cloudUser.id
+  );
+
+  if (cloudOwnersLastError) {
+    cloudStatus(`${t('catalogOwnerLoadFailed')}: ${cloudOwnersLastError}`, true);
+  } else if (onlyOwnCatalog) {
+    cloudStatus(t('catalogOwnerOnlyMine'), false);
+  } else if (ownerId) {
     const message = readOnlyView
       ? `${t('authViewingUser', { id: getCompactUserId(ownerId) })} (${t('readOnlyMode')})`
       : t('authViewingOwn');
@@ -439,3 +451,4 @@ window.isCloudReady = () => Boolean(cloudClient);
 window.isCloudReadOnlyView = isCloudReadOnlyView;
 window.getCloudOwnerId = getCloudOwnerId;
 window.refreshCloudUi = setAuthUi;
+window.refreshCloudOwners = refreshOwnerOptions;

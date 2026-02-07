@@ -33,6 +33,10 @@ function renderCurrent() {
 
 async function refreshCloudData() {
   try {
+    if (typeof refreshCloudOwners === 'function') {
+      await refreshCloudOwners();
+      if (typeof refreshCloudUi === 'function') refreshCloudUi();
+    }
     const rows = await tryLoadDataJson();
     if (isReadOnlyCloudView() && currentMode === 'editor') {
       currentMode = 'gallery';
