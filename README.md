@@ -22,6 +22,18 @@ window.HOTWILLS_CONFIG = {
 };
 ```
 
+### Google OAuth setup
+
+1. In Google Cloud Console, create OAuth 2.0 Client ID (`Web application`).
+2. In Google OAuth client, set authorized redirect URI:
+`https://mxteotlrohorkqvwdxmo.supabase.co/auth/v1/callback`
+3. In Supabase Dashboard:
+- `Authentication -> Providers -> Google`: enable provider, paste Google client ID/secret.
+- `Authentication -> URL Configuration`: set Site URL to `https://dmitry-dev-pet.github.io/hotwills/`.
+- Add redirect URLs:
+`https://dmitry-dev-pet.github.io/hotwills/`
+`http://localhost:8080/`
+
 ## 2. Install dependencies
 
 ```bash

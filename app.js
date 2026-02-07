@@ -8,6 +8,7 @@ const refs = {
   status: document.getElementById("status"),
   authForm: document.getElementById("authForm"),
   signUpBtn: document.getElementById("signUpBtn"),
+  googleSignInBtn: document.getElementById("googleSignInBtn"),
   signOutBtn: document.getElementById("signOutBtn"),
   refreshBtn: document.getElementById("refreshBtn"),
   searchInput: document.getElementById("searchInput"),
@@ -39,6 +40,25 @@ function escapeHtml(value) {
 
 function sanitizeFilename(name) {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_");
+}
+
+function oauthRedirectTo() {
+  return `${window.location.origin}${window.location.pathname}`;
+}
+
+function readOAuthErrorFromUrl() {
+  const query = new URLSearchParams(window.location.search);
+  const hash = window.location.hash.startsWith("#")
+    ? new URLSearchParams(window.location.hash.slice(1))
+    : new URLSearchParams();
+
+  const errorDescription =
+    query.get("error_description") ||
+    hash.get("error_description") ||
+    query.get("error") ||
+    hash.get("error");
+
+  return errorDescription ? decodeURIComponent(errorDescription.replace(/\+/g, " ")) : "";
 }
 
 function publicImageUrl(path) {
@@ -310,6 +330,20 @@ function bindAuthActions() {
     setStatus("Sign up successful. Check your email if confirmation is enabled.");
   });
 
+  refs.googleSignInBtn.addEventListener("click", async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: oauthRedirectTo()
+      }
+    });
+
+    if (error) {
+      setStatus(`Google sign-in failed: ${error.message}`, true);
+      return;
+    }
+  });
+
   refs.signOutBtn.addEventListener("click", async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -337,6 +371,11 @@ async function main() {
   }
 
   supabase = createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+
+  const oauthError = readOAuthErrorFromUrl();
+  if (oauthError) {
+    setStatus(`OAuth error: ${oauthError}`, true);
+  }
 
   bindAuthActions();
   bindAppActions();
