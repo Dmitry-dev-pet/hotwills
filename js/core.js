@@ -315,9 +315,9 @@ function tryLoadDataJson() {
 }
 
 function showEmptyWithLoadButton(container, attachClick) {
-  container.innerHTML = '<div class="gallery-empty"><button type="button" class="empty-load-btn" data-t="loadJson">' + t('loadJson') + '</button></div>';
+  container.innerHTML = '<div class="gallery-empty"><button type="button" class="empty-load-btn" data-t="loadFolder">' + t('loadFolder') + '</button></div>';
   const btn = container.querySelector('.empty-load-btn');
-  if (btn && attachClick) btn.addEventListener('click', () => document.getElementById('fileInput').click());
+  if (btn && attachClick) btn.addEventListener('click', () => document.getElementById('folderInput').click());
 }
 
 window.saveImagesToLocalStore = saveImagesToLocalStore;

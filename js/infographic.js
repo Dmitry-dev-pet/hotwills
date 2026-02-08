@@ -120,8 +120,8 @@ function bindYearInteractions(target, year, grid, chart, yearItemsMap, onEnter, 
 }
 
 function showEmptyLoadState(grid) {
-  grid.innerHTML = '<div class="gallery-empty"><button type="button" class="empty-load-btn" data-t="loadJson">' + t('loadJson') + '</button></div>';
-  grid.querySelector('.empty-load-btn')?.addEventListener('click', () => document.getElementById('fileInput').click());
+  grid.innerHTML = '<div class="gallery-empty"><button type="button" class="empty-load-btn" data-t="loadFolder">' + t('loadFolder') + '</button></div>';
+  grid.querySelector('.empty-load-btn')?.addEventListener('click', () => document.getElementById('folderInput').click());
 }
 
 function renderInfographicGrid(grid, chart, models, yearItemsMap) {

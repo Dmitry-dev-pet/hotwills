@@ -61,7 +61,7 @@ function updateToolbarVisibility(mode) {
   document.querySelectorAll('.mode-editor').forEach(el => el.style.display = (effectiveMode === 'editor' && !readOnly) ? '' : 'none');
   document.querySelectorAll('.mode-gallery').forEach(el => el.style.display = (effectiveMode === 'gallery' || effectiveMode === 'infographic') ? '' : 'none');
 
-  const lockIds = ['loadJsonBtn', 'loadFolderBtn', 'loadImagesBtn', 'copyBtn', 'saveBtn', 'cloudSaveBtn', 'addPhotoBtn'];
+  const lockIds = ['loadFolderBtn', 'loadImagesBtn', 'copyBtn', 'saveBtn', 'cloudSaveBtn', 'addPhotoBtn'];
   lockIds.forEach((id) => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -204,28 +204,6 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowLeft') modalPrev();
     if (e.key === 'ArrowRight') modalNext();
   }
-});
-
-document.getElementById('fileInput').addEventListener('change', e => {
-  if (isReadOnlyCloudView()) {
-    showToast(t('readOnlyEditorDisabled'));
-    e.target.value = '';
-    return;
-  }
-  const file = e.target.files[0];
-  if (!file) return;
-  importJsonFile(file)
-    .then((result) => {
-      if ((result?.savedImages || 0) > 0) {
-        showToast(`${t('jsonLoaded')} · ${t('imagesLoaded', { n: result.savedImages })}`);
-      } else {
-        showToast(t('jsonLoaded'));
-      }
-    })
-    .catch((err) => {
-      alert(t('errorInvalidJson') + '\n' + ((err && err.message) || ''));
-    });
-  e.target.value = '';
 });
 
 document.getElementById('loadFolderBtn').addEventListener('click', () => {

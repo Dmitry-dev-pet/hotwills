@@ -59,13 +59,13 @@ function renderEditor() {
       .then(arr => {
         if (arr.length > 0) loadData(arr);
         else {
-          tbody.innerHTML = '<tr><td colspan="6" class="table-empty"><button type="button" class="empty-load-btn" data-t="loadJson">' + t('loadJson') + '</button></td></tr>';
-          tbody.querySelector('.empty-load-btn')?.addEventListener('click', () => document.getElementById('fileInput').click());
+          tbody.innerHTML = '<tr><td colspan="6" class="table-empty"><button type="button" class="empty-load-btn" data-t="loadFolder">' + t('loadFolder') + '</button></td></tr>';
+          tbody.querySelector('.empty-load-btn')?.addEventListener('click', () => document.getElementById('folderInput').click());
         }
       })
       .catch(() => {
-        tbody.innerHTML = '<tr><td colspan="6" class="table-empty"><button type="button" class="empty-load-btn" data-t="loadJson">' + t('loadJson') + '</button></td></tr>';
-        tbody.querySelector('.empty-load-btn')?.addEventListener('click', () => document.getElementById('fileInput').click());
+        tbody.innerHTML = '<tr><td colspan="6" class="table-empty"><button type="button" class="empty-load-btn" data-t="loadFolder">' + t('loadFolder') + '</button></td></tr>';
+        tbody.querySelector('.empty-load-btn')?.addEventListener('click', () => document.getElementById('folderInput').click());
       });
     return;
   }
