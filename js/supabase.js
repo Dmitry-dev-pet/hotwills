@@ -120,6 +120,23 @@ async function ensureUserScopedImagePath(imagePath, userId) {
   if (raw.includes('/')) return { ok: true, path: raw };
 
   const scopedPath = `${userId}/${raw}`;
+  const uploadScoped = async (blob) => {
+    if (!blob) return { ok: false, error: 'empty blob' };
+    const { error } = await cloudClient.storage
+      .from(CLOUD.IMAGE_BUCKET)
+      .upload(scopedPath, blob, { upsert: true, contentType: blob.type || 'application/octet-stream' });
+    if (error) return { ok: false, error: error.message || String(error) };
+    return { ok: true, path: scopedPath };
+  };
+
+  // Prefer browser-local images imported from folder: no noisy Storage probing.
+  if (typeof getLocalImageBlobByName === 'function') {
+    const localBlob = await getLocalImageBlobByName(raw);
+    if (localBlob) {
+      return uploadScoped(localBlob);
+    }
+  }
+
   const scopedBlob = await fetchBlobByUrl(getStoragePublicUrl(scopedPath));
   if (scopedBlob) return { ok: true, path: scopedPath };
 
@@ -137,11 +154,7 @@ async function ensureUserScopedImagePath(imagePath, userId) {
     return { ok: false, error: `image not found: ${raw}` };
   }
 
-  const { error } = await cloudClient.storage
-    .from(CLOUD.IMAGE_BUCKET)
-    .upload(scopedPath, blob, { upsert: true, contentType: blob.type || 'application/octet-stream' });
-  if (error) return { ok: false, error: error.message || String(error) };
-  return { ok: true, path: scopedPath };
+  return uploadScoped(blob);
 }
 
 function getImageUrlFromCloud(path) {
