@@ -12,21 +12,70 @@ body {
 
 /* Header */
 .top-header {
-  padding: 8px 12px;
+  padding: 14px 12px;
   border-bottom: 1px solid var(--border);
   background: var(--bar-bg);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.top-header-main {
+  display: grid;
+  gap: 2px;
+  min-width: 220px;
 }
 
 .top-header-brand {
   color: var(--text);
   text-decoration: none;
-  font-size: 16px;
+  font-size: 28px;
   font-weight: 700;
   letter-spacing: 0.2px;
+  line-height: 1;
+}
+
+.top-header-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.top-header-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  flex: 1;
+}
+
+.top-header-metric {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.top-header-stats-btn {
+  padding: 8px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.top-header-stats-btn:hover {
+  background: var(--btn-hover);
+  border-color: var(--input-focus);
 }
 
 .auth-menu {
@@ -222,8 +271,11 @@ body {
 }
 
 @media (min-width: 768px) {
-  .top-header { padding: 10px 20px; gap: 10px; }
-  .top-header-brand { font-size: 17px; }
+  .top-header { padding: 16px 20px; gap: 12px; }
+  .top-header-brand { font-size: 32px; }
+  .top-header-subtitle { font-size: 13px; }
+  .top-header-metric { font-size: 13px; padding: 5px 10px; }
+  .top-header-stats-btn { font-size: 14px; padding: 9px 16px; }
   .auth-menu-panel { padding: 14px; width: 360px; }
   .auth-menu-panel button { padding: 8px 12px; font-size: 14px; }
   .auth-input { padding: 8px 12px; font-size: 14px; }

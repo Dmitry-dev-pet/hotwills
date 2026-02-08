@@ -13,7 +13,17 @@
 </head>
 <body>
   <div class="top-header">
-    <a class="top-header-brand" href="./">Hotwills</a>
+    <div class="top-header-main">
+      <a class="top-header-brand" href="./">Hotwills</a>
+      <div class="top-header-subtitle" data-t="headerSubtitle">Каталог и статистика</div>
+    </div>
+    <div class="top-header-metrics" id="headerMetrics">
+      <span class="top-header-metric" id="headerStatModels"></span>
+      <span class="top-header-metric" id="headerStatCodes"></span>
+      <span class="top-header-metric" id="headerStatYears"></span>
+      <span class="top-header-metric" id="headerStatSimilar"></span>
+    </div>
+    <button type="button" id="statsBtn" class="top-header-stats-btn" data-t="statsOpen">Статистика</button>
   </div>
 
   <div class="toolbar">
@@ -134,6 +144,57 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="statsModalOverlay" aria-hidden="true">
+    <div class="modal modal-stats" id="statsModal">
+      <div class="modal-header">
+        <h3 class="modal-title" data-t="statsTitle">Статистика каталога</h3>
+        <button type="button" class="modal-close" id="statsModalClose">×</button>
+      </div>
+      <div class="modal-body stats-modal-body">
+        <section class="stats-section">
+          <h4 class="stats-title" data-t="statsSectionOverview">Обзор</h4>
+          <div class="stats-cards" id="statsOverviewCards"></div>
+        </section>
+        <section class="stats-section">
+          <h4 class="stats-title" data-t="statsSectionCollection">Состав каталога</h4>
+          <div class="stats-grid-2">
+            <div class="stats-block">
+              <h5 class="stats-subtitle" data-t="statsTopCodes">Топ кодов</h5>
+              <div class="stats-list" id="statsTopCodesList"></div>
+            </div>
+            <div class="stats-block">
+              <h5 class="stats-subtitle" data-t="statsDecades">Распределение по десятилетиям</h5>
+              <div class="stats-bars" id="statsDecadesBars"></div>
+            </div>
+          </div>
+          <div class="stats-grid-2">
+            <div class="stats-block">
+              <h5 class="stats-subtitle" data-t="statsDuplicates">Дубликаты по коду</h5>
+              <div class="stats-list" id="statsDuplicatesList"></div>
+            </div>
+            <div class="stats-block">
+              <h5 class="stats-subtitle" data-t="statsDataQuality">Качество данных</h5>
+              <div class="stats-cards compact" id="statsQualityCards"></div>
+            </div>
+          </div>
+        </section>
+        <section class="stats-section">
+          <h4 class="stats-title" data-t="statsSectionSocial">Сравнение</h4>
+          <div class="stats-compare-controls">
+            <label for="statsCompareOwner" data-t="statsCompareWith">Сравнить с</label>
+            <select id="statsCompareOwner"></select>
+            <button type="button" id="statsCompareApply" data-t="statsCompareApply">Сравнить</button>
+          </div>
+          <div class="stats-cards" id="statsCompareCards"></div>
+          <div class="stats-block">
+            <h5 class="stats-subtitle" data-t="statsTopSharedCodes">Топ общих кодов</h5>
+            <div class="stats-list" id="statsSharedCodesList"></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
   <script src="config.js"></script>
@@ -144,6 +205,7 @@
   <script src="js/gallery.js"></script>
   <script src="js/editor.js"></script>
   <script src="js/infographic.js"></script>
+  <script src="js/stats.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

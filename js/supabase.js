@@ -880,5 +880,7 @@ window.getCloudUser = () => cloudUser;
 window.isCloudReady = () => Boolean(cloudClient);
 window.isCloudReadOnlyView = isCloudReadOnlyView;
 window.getCloudOwnerId = getCloudOwnerId;
+window.getCloudOwnerOptions = () => [...cloudOwnerOptions];
+window.getCloudOwnerLabel = (ownerId) => labelForOwner(normalizeUserId(ownerId) || ownerId);
 window.refreshCloudUi = setAuthUi;
 window.refreshCloudOwners = refreshOwnerOptions;

@@ -22,6 +22,7 @@ function loadData(json) {
   data = Array.isArray(json) ? json : [];
   sortedData = [...data];
   sortBy(sortKey, true);
+  if (typeof onCatalogDataChanged === 'function') onCatalogDataChanged(data);
   renderCurrent();
 }
 
@@ -248,6 +249,10 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     const authMenu = document.querySelector('.auth-menu');
     if (authMenu?.open) authMenu.removeAttribute('open');
+    if (typeof isStatsModalOpen === 'function' && isStatsModalOpen()) {
+      if (typeof closeStatsModal === 'function') closeStatsModal();
+      return;
+    }
     if (document.getElementById('yearModalOverlay').classList.contains('show')) closeYearModal();
     else closeModal();
   }
@@ -488,6 +493,7 @@ document.getElementById('langSelect').addEventListener('change', (e) => {
   document.documentElement.lang = getLang();
   applyTranslations();
   if (typeof refreshCloudUi === 'function') refreshCloudUi();
+  if (typeof refreshStatsUi === 'function') refreshStatsUi();
   document.title = t('pageTitle');
   document.getElementById('searchInput').placeholder = t('searchPlaceholder');
   updateToolbarVisibility(currentMode);
@@ -496,6 +502,7 @@ document.getElementById('langSelect').addEventListener('change', (e) => {
 
 applyTranslations();
 if (typeof refreshCloudUi === 'function') refreshCloudUi();
+if (typeof refreshStatsUi === 'function') refreshStatsUi();
 document.title = t('pageTitle');
 document.getElementById('searchInput').placeholder = t('searchPlaceholder');
 updateToolbarVisibility(currentMode);
