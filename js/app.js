@@ -61,7 +61,7 @@ function updateToolbarVisibility(mode) {
   document.querySelectorAll('.mode-editor').forEach(el => el.style.display = (effectiveMode === 'editor' && !readOnly) ? '' : 'none');
   document.querySelectorAll('.mode-gallery').forEach(el => el.style.display = (effectiveMode === 'gallery' || effectiveMode === 'infographic') ? '' : 'none');
 
-  const lockIds = ['loadJsonBtn', 'copyBtn', 'saveBtn', 'cloudSaveBtn', 'addPhotoBtn'];
+  const lockIds = ['loadJsonBtn', 'loadFolderBtn', 'loadImagesBtn', 'copyBtn', 'saveBtn', 'cloudSaveBtn', 'addPhotoBtn'];
   lockIds.forEach((id) => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -101,6 +101,32 @@ function formatCloudError(err) {
   if (err.hint) parts.push('hint: ' + err.hint);
   if (err.code) parts.push('code: ' + err.code);
   return parts.join(' | ') || String(err);
+}
+
+async function importParsedJsonPayload(parsed) {
+  const arr = Array.isArray(parsed) ? parsed : (parsed?.items ?? parsed?.data ?? []);
+  let savedImages = 0;
+
+  if (
+    parsed
+    && typeof parsed === 'object'
+    && !Array.isArray(parsed)
+    && parsed.images
+    && typeof saveImageMapToLocalStore === 'function'
+  ) {
+    const result = await saveImageMapToLocalStore(parsed.images);
+    savedImages = result?.saved || 0;
+  }
+
+  const normalized = Array.isArray(arr) ? arr : [];
+  loadData(normalized);
+  return { items: normalized.length, savedImages };
+}
+
+async function importJsonFile(file) {
+  const text = String(await file.text()).replace(/^\uFEFF/, '').trim();
+  const parsed = JSON.parse(text);
+  return importParsedJsonPayload(parsed);
 }
 
 function switchToGallery() {
@@ -188,34 +214,64 @@ document.getElementById('fileInput').addEventListener('change', e => {
   }
   const file = e.target.files[0];
   if (!file) return;
-  const r = new FileReader();
-  r.onload = async () => {
-    try {
-      let text = String(r.result).replace(/^\uFEFF/, '').trim();
-      const parsed = JSON.parse(text);
-      const arr = Array.isArray(parsed) ? parsed : (parsed?.items ?? parsed?.data ?? []);
-      let savedImages = 0;
-      if (
-        parsed
-        && typeof parsed === 'object'
-        && !Array.isArray(parsed)
-        && parsed.images
-        && typeof saveImageMapToLocalStore === 'function'
-      ) {
-        const result = await saveImageMapToLocalStore(parsed.images);
-        savedImages = result?.saved || 0;
-      }
-      loadData(Array.isArray(arr) ? arr : []);
-      if (savedImages > 0) {
-        showToast(`${t('jsonLoaded')} · ${t('imagesLoaded', { n: savedImages })}`);
+  importJsonFile(file)
+    .then((result) => {
+      if ((result?.savedImages || 0) > 0) {
+        showToast(`${t('jsonLoaded')} · ${t('imagesLoaded', { n: result.savedImages })}`);
       } else {
         showToast(t('jsonLoaded'));
       }
-    } catch (err) {
-      alert(t('errorInvalidJson') + '\n' + (err.message || ''));
+    })
+    .catch((err) => {
+      alert(t('errorInvalidJson') + '\n' + ((err && err.message) || ''));
+    });
+  e.target.value = '';
+});
+
+document.getElementById('loadFolderBtn').addEventListener('click', () => {
+  document.getElementById('folderInput').click();
+});
+
+document.getElementById('folderInput').addEventListener('change', async (e) => {
+  if (isReadOnlyCloudView()) {
+    showToast(t('readOnlyEditorDisabled'));
+    e.target.value = '';
+    return;
+  }
+  const files = Array.from(e.target.files || []);
+  if (!files.length) return;
+
+  const jsonCandidates = files.filter((f) => /\.json$/i.test(f.name));
+  const jsonFile = jsonCandidates.find((f) => f.name.toLowerCase() === 'data.json') || jsonCandidates[0];
+  if (!jsonFile) {
+    showToast(t('folderJsonMissing'));
+    e.target.value = '';
+    return;
+  }
+
+  const imageFiles = files.filter((f) => {
+    if (!f?.name) return false;
+    if (f.type && f.type.startsWith('image/')) return true;
+    return /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(f.name);
+  });
+
+  try {
+    let storedImages = 0;
+    if (imageFiles.length > 0 && typeof saveImagesToLocalStore === 'function') {
+      const saveResult = await saveImagesToLocalStore(imageFiles);
+      storedImages = saveResult?.saved || 0;
     }
-  };
-  r.readAsText(file, 'UTF-8');
+
+    const result = await importJsonFile(jsonFile);
+    const totalImages = storedImages + (result?.savedImages || 0);
+    showToast(t('folderImported', {
+      items: result?.items || 0,
+      images: totalImages
+    }));
+  } catch (err) {
+    alert(t('errorInvalidJson') + '\n' + ((err && err.message) || ''));
+  }
+
   e.target.value = '';
 });
 
