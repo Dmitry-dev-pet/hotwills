@@ -31,6 +31,43 @@ function renderCurrent() {
   else if (currentMode === 'infographic') renderInfographic();
 }
 
+let similarModelsReqSeq = 0;
+
+async function refreshSimilarModelsHints(rows) {
+  const reqId = ++similarModelsReqSeq;
+  const applyEmpty = () => {
+    if (typeof setSimilarModelsByCode === 'function') setSimilarModelsByCode(new Map());
+  };
+  if (typeof setSimilarModelsByCode !== 'function' || typeof fetchSimilarModelsByCodes !== 'function') {
+    applyEmpty();
+    return;
+  }
+  if (!(typeof isCloudReady === 'function' && isCloudReady())) {
+    applyEmpty();
+    return;
+  }
+  const ownerId = typeof getCloudOwnerId === 'function' ? getCloudOwnerId() : null;
+  if (!ownerId) {
+    applyEmpty();
+    return;
+  }
+
+  const codes = Array.from(new Set((rows || []).map((row) => String(row?.code || '').trim()).filter(Boolean)));
+  if (!codes.length) {
+    applyEmpty();
+    return;
+  }
+
+  try {
+    const similarMap = await fetchSimilarModelsByCodes(codes, ownerId);
+    if (reqId !== similarModelsReqSeq) return;
+    setSimilarModelsByCode(similarMap instanceof Map ? similarMap : new Map());
+  } catch (e) {
+    if (reqId !== similarModelsReqSeq) return;
+    applyEmpty();
+  }
+}
+
 async function refreshCloudData() {
   try {
     if (typeof refreshCloudOwners === 'function') {
@@ -44,10 +81,12 @@ async function refreshCloudData() {
       history.replaceState(null, '', location.pathname + location.search);
     }
     loadData(rows);
+    refreshSimilarModelsHints(rows);
     updateToolbarVisibility(currentMode);
     return { ok: true, count: rows.length };
   } catch (e) {
     loadData([]);
+    refreshSimilarModelsHints([]);
     if (typeof cloudStatus === 'function') {
       cloudStatus(`${t('cloudLoadFailed')}: ${formatCloudError(e)}`, true);
     }
@@ -125,6 +164,7 @@ async function importParsedJsonPayload(parsed) {
 
   const normalized = Array.isArray(arr) ? arr : [];
   loadData(normalized);
+  refreshSimilarModelsHints(normalized);
   return { items: normalized.length, savedImages };
 }
 

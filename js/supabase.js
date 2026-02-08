@@ -240,6 +240,94 @@ async function fetchModelsFromCloud(ownerId) {
   return out.map(mapRowToModel);
 }
 
+function normalizeCodeKey(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+async function fetchSimilarModelsByCodes(codes, ownerId) {
+  if (!cloudClient) return new Map();
+  const targetOwnerId = normalizeUserId(ownerId) || getCloudOwnerId();
+  if (!targetOwnerId) return new Map();
+
+  const codeSeen = new Set();
+  const codeList = [];
+  (codes || []).forEach((code) => {
+    const raw = String(code || '').trim();
+    const key = normalizeCodeKey(raw);
+    if (!key || codeSeen.has(key)) return;
+    codeSeen.add(key);
+    codeList.push(raw);
+  });
+  if (!codeList.length) return new Map();
+
+  const rows = [];
+  const codeChunkSize = 100;
+  const pageSize = 1000;
+  for (let i = 0; i < codeList.length; i += codeChunkSize) {
+    const chunk = codeList.slice(i, i + codeChunkSize);
+    for (let from = 0; ; from += pageSize) {
+      const to = from + pageSize - 1;
+      const { data, error } = await cloudClient
+        .from(CLOUD.TABLE)
+        .select('created_by,code,name,image_file')
+        .in('code', chunk)
+        .not('created_by', 'is', null)
+        .neq('created_by', targetOwnerId)
+        .order('created_by', { ascending: true })
+        .range(from, to);
+      if (error) throw error;
+      const page = Array.isArray(data) ? data : [];
+      rows.push(...page);
+      if (page.length < pageSize) break;
+    }
+  }
+
+  const missingOwnerIds = Array.from(new Set(
+    rows
+      .map((row) => normalizeUserId(row.created_by))
+      .filter((id) => id && !cloudOwnerEmailById[id])
+  ));
+
+  for (let i = 0; i < missingOwnerIds.length; i += 100) {
+    const chunk = missingOwnerIds.slice(i, i + 100);
+    const { data: profileRows, error: profileError } = await cloudClient
+      .from(CLOUD.PROFILE_TABLE)
+      .select('user_id,email')
+      .in('user_id', chunk);
+    if (profileError) throw profileError;
+    (profileRows || []).forEach((profile) => {
+      const userId = normalizeUserId(profile.user_id);
+      const email = normalizeEmail(profile.email);
+      if (userId && email) cloudOwnerEmailById[userId] = email;
+    });
+  }
+
+  const out = new Map();
+  const dedupe = new Set();
+  rows.forEach((row) => {
+    const code = String(row?.code || '').trim();
+    const key = normalizeCodeKey(code);
+    const ownerId = normalizeUserId(row?.created_by);
+    if (!key || !ownerId) return;
+    const email = cloudOwnerEmailById[ownerId] || ownerId;
+    const item = {
+      ownerId,
+      email,
+      code,
+      name: String(row?.name || '').trim(),
+      image: String(row?.image_file || '').trim()
+    };
+    const dedupeKey = `${ownerId}|${code}|${item.name}|${item.image}`;
+    if (dedupe.has(dedupeKey)) return;
+    dedupe.add(dedupeKey);
+    const current = out.get(key) || [];
+    current.push(item);
+    out.set(key, current);
+  });
+
+  return out;
+}
+
 async function saveModelsToCloud(models, options = {}) {
   if (!cloudClient) return { ok: false, error: new Error('Cloud client not initialized') };
   if (!cloudUser) return { ok: false, error: new Error('Not authenticated') };
@@ -702,6 +790,7 @@ async function initCloud(onDataChange) {
 
 window.initCloud = initCloud;
 window.fetchModelsFromCloud = fetchModelsFromCloud;
+window.fetchSimilarModelsByCodes = fetchSimilarModelsByCodes;
 window.saveModelsToCloud = saveModelsToCloud;
 window.uploadImageFilesToCloud = uploadImageFilesToCloud;
 window.getImageUrlFromCloud = getImageUrlFromCloud;

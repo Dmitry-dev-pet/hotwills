@@ -3,6 +3,25 @@
 // ─── Gallery ────────────────────────────────────────────────────────────
 let lazyGalleryObserver = null;
 let modalForcedFromNonGallery = false;
+let similarByCode = new Map();
+
+function normalizeCodeKey(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function getSimilarRowsByCode(code) {
+  const key = normalizeCodeKey(code);
+  if (!key) return [];
+  return similarByCode.get(key) || [];
+}
+
+function setSimilarModelsByCode(nextMap) {
+  similarByCode = nextMap instanceof Map ? nextMap : new Map();
+  if (currentMode === 'gallery') renderGallery();
+  if (document.getElementById('modalOverlay')?.classList.contains('show') && modalIndex >= 0) {
+    showGalleryDetail(modalIndex);
+  }
+}
 
 function observeLazyGalleryImages() {
   const container = document.querySelector('.gallery-container');
@@ -42,11 +61,14 @@ function renderGallery() {
   filtered.forEach((item) => {
     const imgFile = item.image || '';
     const fav = isFavorite(imgFile);
+    const similarRows = getSimilarRowsByCode(item.code);
+    const similarCount = similarRows.length;
     const card = document.createElement('div');
     card.className = 'gallery-card';
     const imgSrc = imgPath(item.image || '');
     card.innerHTML = `
       <button type="button" class="card-fav ${fav ? 'active' : ''}" data-image="${escapeHtml(imgFile)}" title="${t('favorites')}" aria-label="${t('favorites')}">${fav ? '♥' : '♡'}</button>
+      ${similarCount > 0 ? `<div class="gallery-similar-badge">${t('similarModelsBadge', { n: similarCount })}</div>` : ''}
       <img class="gallery-img-lazy" data-src="${escapeHtml(imgSrc)}" alt="${escapeHtml(item.name || '')}">
       <div class="gallery-card-body">
         <div class="gallery-card-code">${escapeHtml(item.code || '')}</div>
@@ -91,6 +113,17 @@ function showGalleryDetail(index) {
 
   modalIndex = ((index % sortedData.length) + sortedData.length) % sortedData.length;
   const item = sortedData[modalIndex];
+  const similarRows = getSimilarRowsByCode(item.code);
+  const similarHtml = similarRows.length > 0
+    ? `
+      <dt>${t('similarModelsTitle')}</dt>
+      <dd>
+        <ul class="modal-similar-list">
+          ${similarRows.map((row) => `<li><span class="modal-similar-email">${escapeHtml(row.email || row.ownerId || '—')}</span> - ${escapeHtml(row.name || '—')} (${escapeHtml(row.code || '—')})</li>`).join('')}
+        </ul>
+      </dd>
+    `
+    : '';
   const content = document.getElementById('modalContent');
   document.getElementById('modalTitle').textContent = item.name || '—';
   content.innerHTML = `
@@ -106,6 +139,7 @@ function showGalleryDetail(index) {
       <dt>${t('file')}</dt>
       <dd>${escapeHtml(item.image || '—')}</dd>
       ${item.link ? `<dt>${t('link')}</dt><dd><a href="${escapeHtml(item.link)}" target="_blank" rel="noopener">${t('linkWord')}</a></dd>` : ''}
+      ${similarHtml}
       </dl>
     </div>
   `;
@@ -134,3 +168,5 @@ function closeModal() {
   }
   modalForcedFromNonGallery = false;
 }
+
+window.setSimilarModelsByCode = setSimilarModelsByCode;
