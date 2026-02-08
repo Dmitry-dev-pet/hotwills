@@ -302,29 +302,60 @@ async function fetchSimilarModelsByCodes(codes, ownerId) {
     });
   }
 
-  const out = new Map();
-  const dedupe = new Set();
+  const groupedByModel = new Map();
   rows.forEach((row) => {
     const code = String(row?.code || '').trim();
-    const key = normalizeCodeKey(code);
+    const codeKey = normalizeCodeKey(code);
     const ownerId = normalizeUserId(row?.created_by);
-    if (!key || !ownerId) return;
+    if (!codeKey || !ownerId) return;
     const email = cloudOwnerEmailById[ownerId] || ownerId;
-    const item = {
-      ownerId,
-      email,
-      code,
-      name: String(row?.name || '').trim(),
-      year: String(row?.year || '').trim(),
-      image: String(row?.image_file || '').trim(),
-      link: String(row?.source_link || '').trim()
-    };
-    const dedupeKey = `${ownerId}|${code}|${item.name}|${item.year}|${item.image}|${item.link}`;
-    if (dedupe.has(dedupeKey)) return;
-    dedupe.add(dedupeKey);
+    const name = String(row?.name || '').trim();
+    const year = String(row?.year || '').trim();
+    const image = String(row?.image_file || '').trim();
+    const link = String(row?.source_link || '').trim();
+    const modelKey = `${ownerId}|${codeKey}|${name.toLowerCase()}`;
+    let item = groupedByModel.get(modelKey);
+    if (!item) {
+      item = {
+        ownerId,
+        email,
+        code,
+        name,
+        years: [],
+        image: image || '',
+        link: link || ''
+      };
+      groupedByModel.set(modelKey, item);
+    }
+    if (year && !item.years.includes(year)) item.years.push(year);
+    if (!item.image && image) item.image = image;
+    if (!item.link && link) item.link = link;
+  });
+
+  const out = new Map();
+  groupedByModel.forEach((item) => {
+    const key = normalizeCodeKey(item.code);
     const current = out.get(key) || [];
-    current.push(item);
+    current.push({
+      ownerId: item.ownerId,
+      email: item.email,
+      code: item.code,
+      name: item.name,
+      year: item.years.join(', '),
+      image: item.image,
+      link: item.link
+    });
     out.set(key, current);
+  });
+
+  out.forEach((items) => {
+    items.sort((a, b) => {
+      const byEmail = String(a.email || '').localeCompare(String(b.email || ''));
+      if (byEmail !== 0) return byEmail;
+      const byName = String(a.name || '').localeCompare(String(b.name || ''));
+      if (byName !== 0) return byName;
+      return String(a.code || '').localeCompare(String(b.code || ''));
+    });
   });
 
   return out;
