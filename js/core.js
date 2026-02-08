@@ -23,6 +23,10 @@ let modalIndex = -1;
 let searchQuery = '';
 let favoritesFilter = false;
 let currentMode = 'gallery';
+const LOCAL_IMAGES_DB = 'hotwills_local_images_db';
+const LOCAL_IMAGES_STORE = 'images';
+let localImageUrls = new Map();
+let localImageUrlsLower = new Map();
 
 // ─── Storage ────────────────────────────────────────────────────────────
 function getSortPrefs() {
@@ -97,6 +101,97 @@ function toggleFavorite(imageFile) {
   setFavorites(fav);
 }
 
+function openLocalImagesDb() {
+  return new Promise((resolve, reject) => {
+    if (!window.indexedDB) {
+      reject(new Error('indexedDB is not available'));
+      return;
+    }
+    const req = indexedDB.open(LOCAL_IMAGES_DB, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(LOCAL_IMAGES_STORE)) {
+        db.createObjectStore(LOCAL_IMAGES_STORE, { keyPath: 'name' });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error || new Error('Failed to open indexedDB'));
+  });
+}
+
+function clearLocalImageUrlCache() {
+  localImageUrls.forEach((url) => URL.revokeObjectURL(url));
+  localImageUrls = new Map();
+  localImageUrlsLower = new Map();
+}
+
+async function loadLocalImagesFromStore() {
+  clearLocalImageUrlCache();
+  if (!window.indexedDB) return { count: 0 };
+
+  const db = await openLocalImagesDb();
+  const rows = await new Promise((resolve, reject) => {
+    const tx = db.transaction(LOCAL_IMAGES_STORE, 'readonly');
+    const store = tx.objectStore(LOCAL_IMAGES_STORE);
+    const req = store.getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error || new Error('Failed to read images from store'));
+  });
+  db.close();
+
+  rows.forEach((row) => {
+    if (!row?.name || !(row.blob instanceof Blob)) return;
+    const url = URL.createObjectURL(row.blob);
+    localImageUrls.set(row.name, url);
+    localImageUrlsLower.set(String(row.name).toLowerCase(), url);
+  });
+
+  return { count: localImageUrls.size };
+}
+
+async function saveImagesToLocalStore(fileList) {
+  const files = Array.from(fileList || []).filter((f) => f && f.name);
+  if (!files.length) return { saved: 0 };
+  if (!window.indexedDB) throw new Error('indexedDB is not available');
+
+  const db = await openLocalImagesDb();
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction(LOCAL_IMAGES_STORE, 'readwrite');
+    const store = tx.objectStore(LOCAL_IMAGES_STORE);
+    files.forEach((file) => {
+      store.put({
+        name: file.name,
+        blob: file,
+        type: file.type || '',
+        updatedAt: Date.now()
+      });
+    });
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error || new Error('Failed to save images to store'));
+    tx.onabort = () => reject(tx.error || new Error('Image save aborted'));
+  });
+  db.close();
+
+  await loadLocalImagesFromStore();
+  return { saved: files.length };
+}
+
+function getLocalImageUrl(filename) {
+  const key = String(filename || '').trim();
+  if (!key) return '';
+  return localImageUrls.get(key) || localImageUrlsLower.get(key.toLowerCase()) || '';
+}
+
+async function initLocalImages() {
+  if (!window.indexedDB) return false;
+  try {
+    await loadLocalImagesFromStore();
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 // ─── Data ───────────────────────────────────────────────────────────────
 function parseYearRange(yearStr) {
   if (!yearStr || !yearStr.trim()) return null;
@@ -140,6 +235,8 @@ function getFilteredGalleryData() {
 }
 
 function imgPath(filename) {
+  const localUrl = getLocalImageUrl(filename || '');
+  if (localUrl) return localUrl;
   if (typeof getImageUrlFromCloud === 'function') {
     return getImageUrlFromCloud(filename || '');
   }
@@ -178,3 +275,6 @@ function showEmptyWithLoadButton(container, attachClick) {
   const btn = container.querySelector('.empty-load-btn');
   if (btn && attachClick) btn.addEventListener('click', () => document.getElementById('fileInput').click());
 }
+
+window.saveImagesToLocalStore = saveImagesToLocalStore;
+window.initLocalImages = initLocalImages;

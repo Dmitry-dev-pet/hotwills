@@ -23,6 +23,8 @@
     </select>
     <input type="file" id="fileInput" accept=".json" style="display:none">
     <button type="button" id="loadJsonBtn" data-t="loadJson" onclick="document.getElementById('fileInput').click()">Загрузить JSON</button>
+    <button type="button" id="loadImagesBtn" data-t="loadImages">Загрузить картинки</button>
+    <input type="file" id="imagesInput" accept="image/*" multiple webkitdirectory directory style="display:none">
     <select id="sortSelect">
       <option value="name" data-t="sortByName">По названию</option>
       <option value="code" data-t="sortByCode">По коду</option>

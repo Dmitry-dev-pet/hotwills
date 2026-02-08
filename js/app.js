@@ -204,6 +204,29 @@ document.getElementById('fileInput').addEventListener('change', e => {
   e.target.value = '';
 });
 
+document.getElementById('loadImagesBtn').addEventListener('click', () => {
+  document.getElementById('imagesInput').click();
+});
+
+document.getElementById('imagesInput').addEventListener('change', async (e) => {
+  const files = e.target.files;
+  if (!files || files.length === 0) return;
+  if (typeof saveImagesToLocalStore !== 'function') {
+    showToast(t('localImagesUnsupported'));
+    e.target.value = '';
+    return;
+  }
+
+  try {
+    const result = await saveImagesToLocalStore(files);
+    showToast(t('imagesLoaded', { n: result.saved || 0 }));
+    renderCurrent();
+  } catch (err) {
+    showToast((err && err.message) ? err.message : t('localImagesUnsupported'));
+  }
+  e.target.value = '';
+});
+
 const applySearch = debounce(() => {
   searchQuery = document.getElementById('searchInput').value;
   if (currentMode === 'gallery') renderGallery();
@@ -342,6 +365,9 @@ document.getElementById('searchInput').placeholder = t('searchPlaceholder');
 updateToolbarVisibility(currentMode);
 
 (async () => {
+  if (typeof initLocalImages === 'function') {
+    await initLocalImages();
+  }
   if (typeof initCloud === 'function') {
     await initCloud(refreshCloudData);
   }

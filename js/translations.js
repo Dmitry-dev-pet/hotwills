@@ -6,8 +6,11 @@ const LANG_VALID = ['ru', 'en', 'pt'];
 const TRANSLATIONS = {
   ru: {
     loadJson: 'Загрузить JSON',
+    loadImages: 'Загрузить картинки',
     addPhoto: 'Добавить фото',
     addPhotoAdded: '{n} фото добавлено',
+    imagesLoaded: 'Сохранено картинок: {n}',
+    localImagesUnsupported: 'Браузер не поддерживает локальное хранилище картинок',
     sortByName: 'По названию',
     sortByCode: 'По коду',
     sortByYear: 'По году',
@@ -85,8 +88,11 @@ const TRANSLATIONS = {
   },
   en: {
     loadJson: 'Load JSON',
+    loadImages: 'Load images',
     addPhoto: 'Add photo',
     addPhotoAdded: '{n} photos added',
+    imagesLoaded: 'Images saved: {n}',
+    localImagesUnsupported: 'Browser does not support local image storage',
     sortByName: 'By name',
     sortByCode: 'By code',
     sortByYear: 'By year',
@@ -164,8 +170,11 @@ const TRANSLATIONS = {
   },
   pt: {
     loadJson: 'Carregar JSON',
+    loadImages: 'Carregar imagens',
     addPhoto: 'Adicionar foto',
     addPhotoAdded: '{n} fotos adicionadas',
+    imagesLoaded: 'Imagens salvas: {n}',
+    localImagesUnsupported: 'O navegador não suporta armazenamento local de imagens',
     sortByName: 'Por nome',
     sortByCode: 'Por código',
     sortByYear: 'Por ano',
