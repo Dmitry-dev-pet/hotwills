@@ -2,6 +2,7 @@
 
 // ─── Gallery ────────────────────────────────────────────────────────────
 let lazyGalleryObserver = null;
+let modalForcedFromNonGallery = false;
 
 function observeLazyGalleryImages() {
   const container = document.querySelector('.gallery-container');
@@ -80,6 +81,14 @@ function renderGallery() {
 
 function showGalleryDetail(index) {
   if (sortedData.length === 0) return;
+  const viewGallery = document.getElementById('viewGallery');
+  if (viewGallery && currentMode !== 'gallery' && viewGallery.classList.contains('hidden')) {
+    viewGallery.classList.remove('hidden');
+    modalForcedFromNonGallery = true;
+  } else {
+    modalForcedFromNonGallery = false;
+  }
+
   modalIndex = ((index % sortedData.length) + sortedData.length) % sortedData.length;
   const item = sortedData[modalIndex];
   const content = document.getElementById('modalContent');
@@ -120,4 +129,8 @@ function modalNext() {
 
 function closeModal() {
   document.getElementById('modalOverlay').classList.remove('show');
+  if (modalForcedFromNonGallery && currentMode !== 'gallery') {
+    document.getElementById('viewGallery').classList.add('hidden');
+  }
+  modalForcedFromNonGallery = false;
 }
