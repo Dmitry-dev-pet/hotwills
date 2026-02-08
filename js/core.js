@@ -220,6 +220,42 @@ async function saveImageMapToLocalStore(imageMap) {
   return { saved: entries.length };
 }
 
+async function getLocalImageBlobByName(filename) {
+  const key = String(filename || '').trim();
+  if (!key || !window.indexedDB) return null;
+
+  let db;
+  try {
+    db = await openLocalImagesDb();
+    const storeGet = (name) => new Promise((resolve, reject) => {
+      const tx = db.transaction(LOCAL_IMAGES_STORE, 'readonly');
+      const store = tx.objectStore(LOCAL_IMAGES_STORE);
+      const req = store.get(name);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error || new Error('Failed to read image by name'));
+    });
+
+    let row = await storeGet(key);
+    if (!row || !(row.blob instanceof Blob)) {
+      const rows = await new Promise((resolve, reject) => {
+        const tx = db.transaction(LOCAL_IMAGES_STORE, 'readonly');
+        const store = tx.objectStore(LOCAL_IMAGES_STORE);
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error || new Error('Failed to read all images'));
+      });
+      const lower = key.toLowerCase();
+      row = rows.find((item) => String(item?.name || '').toLowerCase() === lower) || null;
+    }
+
+    return (row && row.blob instanceof Blob) ? row.blob : null;
+  } catch (e) {
+    return null;
+  } finally {
+    if (db) db.close();
+  }
+}
+
 function getLocalImageUrl(filename) {
   const key = String(filename || '').trim();
   if (!key) return '';
@@ -322,4 +358,5 @@ function showEmptyWithLoadButton(container, attachClick) {
 
 window.saveImagesToLocalStore = saveImagesToLocalStore;
 window.saveImageMapToLocalStore = saveImageMapToLocalStore;
+window.getLocalImageBlobByName = getLocalImageBlobByName;
 window.initLocalImages = initLocalImages;

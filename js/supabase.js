@@ -124,11 +124,15 @@ async function ensureUserScopedImagePath(imagePath, userId) {
   if (scopedBlob) return { ok: true, path: scopedPath };
 
   // 1) try existing object from storage root key (legacy import)
-  // 2) fallback to local bundled image under /img
+  // 2) try browser local image storage (folder import)
+  // 3) fallback to local bundled image under /img
   const fromStorage = await fetchBlobByUrl(getStoragePublicUrl(raw));
+  const fromIndexedDb = fromStorage
+    ? null
+    : (typeof getLocalImageBlobByName === 'function' ? await getLocalImageBlobByName(raw) : null);
   const imgDir = (typeof CONFIG !== 'undefined' && CONFIG && CONFIG.IMG_DIR) ? CONFIG.IMG_DIR : 'img/';
-  const fromLocal = fromStorage ? null : await fetchBlobByUrl(imgDir + encodeURIComponent(raw));
-  const blob = fromStorage || fromLocal;
+  const fromLocal = (fromStorage || fromIndexedDb) ? null : await fetchBlobByUrl(imgDir + encodeURIComponent(raw));
+  const blob = fromStorage || fromIndexedDb || fromLocal;
   if (!blob) {
     return { ok: false, error: `image not found: ${raw}` };
   }
