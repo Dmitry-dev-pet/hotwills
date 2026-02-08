@@ -1,0 +1,545 @@
+{
+  "startedAt": "2026-02-08T02:34:01.138Z",
+  "finishedAt": "2026-02-08T02:34:01.380Z",
+  "endpoint": "http://127.0.0.1:8317",
+  "model": "gemini-3-pro-image-preview",
+  "packDir": "/Users/dmitry/Project/hotwills/data/import-pack-3",
+  "outDir": "/Users/dmitry/Project/hotwills/data/stylized-pack-import3",
+  "prompt": "Restyle this toy car photo to match a clean collectible-catalog look. Keep the same car identity, angle, and proportions. Use a neutral light background with soft studio shadows. High detail, crisp edges, realistic die-cast texture, no text, no watermark.",
+  "totalInJson": 88,
+  "processed": 88,
+  "styled": 0,
+  "fallback": 88,
+  "skipped": 0,
+  "failed": 0,
+  "items": [
+    {
+      "image": "48.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "33.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "5.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "1.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "39.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "68.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "8.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "84.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "12.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "44.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "69.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "13.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "34.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "63.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "78.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "26.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "83.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "66.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "14.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "85.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "17.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "71.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "15.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "0.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "70.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "18.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "60.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "42.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "75.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "80.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "61.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "32.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "79.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "86.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "40.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "73.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "53.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "11.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "51.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "19.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "41.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "64.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "46.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "81.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "22.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "20.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "35.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "2.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "52.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "23.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "24.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "74.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "25.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "65.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "67.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "77.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "54.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "37.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "21.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "3.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "6.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "58.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "56.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "36.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "28.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "29.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "9.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "16.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "72.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "31.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "82.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "27.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "87.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "49.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "62.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "47.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "38.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "55.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "59.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "7.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "50.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "76.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "30.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "4.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "43.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "45.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "57.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    },
+    {
+      "image": "10.webp",
+      "status": "fallback-original",
+      "source": "",
+      "error": "cliproxy error: auth_unavailable: no auth available"
+    }
+  ]
+}

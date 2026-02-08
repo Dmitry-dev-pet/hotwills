@@ -1,0 +1,149 @@
+{
+  "startedAt": "2026-02-08T01:01:34.028Z",
+  "finishedAt": "2026-02-08T01:06:43.086Z",
+  "endpoint": "http://127.0.0.1:8317",
+  "model": "gemini-3-pro-image-preview",
+  "packDir": "/Users/dmitry/Project/hotwills/data/source",
+  "outDir": "/Users/dmitry/Project/hotwills/data/stylized-pack",
+  "prompt": "Restyle this toy car photo to match a clean collectible-catalog look. Keep the same car identity, angle, and proportions. Use a neutral light background with soft studio shadows. High detail, crisp edges, realistic die-cast texture, no text, no watermark.",
+  "totalInJson": 22,
+  "processed": 22,
+  "styled": 22,
+  "fallback": 0,
+  "skipped": 0,
+  "failed": 0,
+  "items": [
+    {
+      "image": "0.jpg",
+      "status": "styled",
+      "source": "choices[0].message.images[].image_url(data)",
+      "error": ""
+    },
+    {
+      "image": "1.jpg",
+      "status": "styled",
+      "source": "choices[0].message.images[].image_url(data)",
+      "error": ""
+    },
+    {
+      "image": "2.jpg",
+      "status": "styled",
+      "source": "choices[0].message.images[].image_url(data)",
+      "error": ""
+    },
+    {
+      "image": "3.jpg",
+      "status": "styled",
+      "source": "choices[0].message.images[].image_url(data)",
+      "error": ""
+    },
+    {
+      "image": "4.jpg",
+      "status": "styled",
+      "source": "choices[0].message.images[].image_url(data)",
+      "error": ""
+    },
+    {
+      "image": "5.jpg",
+      "status": "styled",
+      "source": "choices[0].message.images[].image_url(data)",
+      "error": ""
+    },
+    {
+      "image": "6.jpg",
+      "status": "styled",
+      "source": "choices[0].message.images[].image_url(data)",
+      "error": ""
+    },
+    {
+      "image": "7.jpg",
+      "status": "styled",
+      "source": "choices[0].message.images[].image_url(data)",
+      "error": ""
+    },
+    {
+      "image": "8.jpg",
+      "status": "styled",
+      "source": "choices[0].message.images[].image_url(data)",
+      "error": ""
+    },
+    {
+      "image": "9.jpg",
+      "status": "styled",
+      "source": "choices[0].message.images[].image_url(data)",
+      "error": ""
+    },
+    {
+      "image": "10.jpg",
+      "status": "styled",
+      "source": "choices[0].message.images[].image_url(data)",
+      "error": ""
+    },
+    {
+      "image": "11.jpg",
+      "status": "styled",
+      "source": "choices[0].message.images[].image_url(data)",
+      "error": ""
+    },
+    {
+      "image": "12.jpg",
+      "status": "styled",
+      "source": "choices[0].message.images[].image_url(data)",
+      "error": ""
+    },
+    {
+      "image": "13.jpg",
+      "status": "styled",
+      "source": "choices[0].message.images[].image_url(data)",
+      "error": ""
+    },
+    {
+      "image": "14.jpg",
+      "status": "styled",
+      "source": "choices[0].message.images[].image_url(data)",
+      "error": ""
+    },
+    {
+      "image": "15.jpg",
+      "status": "styled",
+      "source": "choices[0].message.images[].image_url(data)",
+      "error": ""
+    },
+    {
+      "image": "16.jpg",
+      "status": "styled",
+      "source": "choices[0].message.images[].image_url(data)",
+      "error": ""
+    },
+    {
+      "image": "17.jpg",
+      "status": "styled",
+      "source": "choices[0].message.images[].image_url(data)",
+      "error": ""
+    },
+    {
+      "image": "18.jpg",
+      "status": "styled",
+      "source": "choices[0].message.images[].image_url(data)",
+      "error": ""
+    },
+    {
+      "image": "19.jpg",
+      "status": "styled",
+      "source": "choices[0].message.images[].image_url(data)",
+      "error": ""
+    },
+    {
+      "image": "20.jpg",
+      "status": "styled",
+      "source": "choices[0].message.images[].image_url(data)",
+      "error": ""
+    },
+    {
+      "image": "21.jpg",
+      "status": "styled",
+      "source": "choices[0].message.images[].image_url(data)",
+      "error": ""
+    }
+  ]
+}

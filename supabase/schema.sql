@@ -217,5 +217,13 @@ for delete
 to authenticated
 using (
   bucket_id = 'model-images'
-  and split_part(name, '/', 1) = (select auth.uid())::text
+  and (
+    split_part(name, '/', 1) = (select auth.uid())::text
+    or exists (
+      select 1
+      from public.models m
+      where m.image_file = storage.objects.name
+        and m.created_by = (select auth.uid())
+    )
+  )
 );
