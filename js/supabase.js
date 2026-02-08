@@ -760,9 +760,44 @@ function setAuthUi() {
       cloudStatus(t('authSignedOut'), false);
       return;
     }
-    const { error } = await cloudClient.auth.signOut();
-    if (error) cloudStatus(error.message, true);
-    else cloudStatus(t('authSignedOut'), false);
+    signOutBtn.disabled = true;
+    let signOutError = null;
+    try {
+      // Prefer local sign-out first so logout works even with unstable network.
+      try {
+        const { error } = await cloudClient.auth.signOut({ scope: 'local' });
+        if (error) signOutError = error;
+      } catch (e) {
+        signOutError = e;
+      }
+
+      // Fallback to default sign-out path if local scope was not successful.
+      if (signOutError) {
+        try {
+          const { error } = await cloudClient.auth.signOut();
+          if (!error) signOutError = null;
+          else signOutError = error;
+        } catch (e) {
+          signOutError = e;
+        }
+      }
+
+      await syncUserFromSession();
+      startCloudRealtime();
+      if (typeof cloudOnDataChange === 'function') await cloudOnDataChange();
+
+      if (!cloudUser) {
+        cloudStatus(t('authSignedOut'), false);
+        const authMenu = document.querySelector('.auth-menu');
+        if (authMenu?.open) authMenu.removeAttribute('open');
+      } else if (signOutError) {
+        cloudStatus(signOutError.message || String(signOutError), true);
+      } else {
+        cloudStatus(t('cloudLoadFailed'), true);
+      }
+    } finally {
+      setAuthUi();
+    }
   };
 
   if (ownerSelect) {
