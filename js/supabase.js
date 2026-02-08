@@ -16,6 +16,7 @@ let cloudOwnerOptions = [];
 let cloudOwnersLastError = '';
 let cloudOwnerEmailById = {};
 const CLOUD_OWNER_STORAGE_KEY = 'mbx_cloud_owner_id';
+const OWNER_QUERY_TIMEOUT_MS = 7000;
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -26,6 +27,16 @@ function normalizeUserId(value) {
 
 function normalizeEmail(value) {
   return (value || '').trim().toLowerCase();
+}
+
+function withTimeout(promise, ms, label) {
+  let timer = null;
+  const timeoutPromise = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    if (timer) clearTimeout(timer);
+  });
 }
 
 function loadPersistedOwnerId() {
@@ -585,7 +596,10 @@ function renderOwnerSelect() {
 
 async function refreshOwnerOptions() {
   const ownerSelect = document.getElementById('authOwnerSelect');
-  cloudOwnersLastError = '';
+  const previousOwnerOptions = Array.isArray(cloudOwnerOptions) ? [...cloudOwnerOptions] : [];
+  const previousOwnerEmailById = { ...cloudOwnerEmailById };
+  let nextOwnersLastError = '';
+
   if (ownerSelect) {
     ownerSelect.disabled = true;
     ownerSelect.innerHTML = `<option value="">${t('catalogOwnerLoading')}</option>`;
@@ -601,13 +615,25 @@ async function refreshOwnerOptions() {
   const ownerSet = new Set();
   cloudOwnerEmailById = {};
 
-  const { data: profileRows, error: profileRowsError } = await cloudClient
-    .from(CLOUD.PROFILE_TABLE)
-    .select('user_id,email')
-    .limit(5000);
+  let profileRows = null;
+  let profileRowsError = null;
+  try {
+    const profileResult = await withTimeout(
+      cloudClient
+        .from(CLOUD.PROFILE_TABLE)
+        .select('user_id,email')
+        .limit(5000),
+      OWNER_QUERY_TIMEOUT_MS,
+      'catalog owners query'
+    );
+    profileRows = profileResult.data;
+    profileRowsError = profileResult.error;
+  } catch (e) {
+    profileRowsError = e;
+  }
 
   if (profileRowsError) {
-    cloudOwnersLastError = profileRowsError.message || String(profileRowsError);
+    nextOwnersLastError = profileRowsError.message || String(profileRowsError);
   } else {
     (profileRows || []).forEach((row) => {
       const userId = normalizeUserId(row.user_id);
@@ -624,19 +650,40 @@ async function refreshOwnerOptions() {
   }
 
   if (ownerSet.size === 0) {
-    const { data: modelOwners, error: modelOwnersError } = await cloudClient
-      .from(CLOUD.TABLE)
-      .select('created_by')
-      .not('created_by', 'is', null)
-      .limit(5000);
+    let modelOwners = null;
+    let modelOwnersError = null;
+    try {
+      const modelOwnersResult = await withTimeout(
+        cloudClient
+          .from(CLOUD.TABLE)
+          .select('created_by')
+          .not('created_by', 'is', null)
+          .limit(5000),
+        OWNER_QUERY_TIMEOUT_MS,
+        'model owners fallback query'
+      );
+      modelOwners = modelOwnersResult.data;
+      modelOwnersError = modelOwnersResult.error;
+    } catch (e) {
+      modelOwnersError = e;
+    }
     if (modelOwnersError) {
-      cloudOwnersLastError = cloudOwnersLastError || modelOwnersError.message || String(modelOwnersError);
+      nextOwnersLastError = nextOwnersLastError || modelOwnersError.message || String(modelOwnersError);
     } else {
       (modelOwners || []).forEach((row) => {
         const userId = normalizeUserId(row.created_by);
         if (userId) ownerSet.add(userId);
       });
     }
+  }
+
+  // If queries failed/time out, keep previous known owners to avoid UI stuck in loading state.
+  if (ownerSet.size === 0 && previousOwnerOptions.length > 0) {
+    previousOwnerOptions.forEach((ownerId) => {
+      const normalized = normalizeUserId(ownerId);
+      if (normalized) ownerSet.add(normalized);
+    });
+    cloudOwnerEmailById = { ...previousOwnerEmailById, ...cloudOwnerEmailById };
   }
 
   const ownerIds = Array.from(ownerSet);
@@ -654,6 +701,7 @@ async function refreshOwnerOptions() {
   if (!cloudOwnerId || !cloudOwnerOptions.includes(cloudOwnerId)) {
     cloudOwnerId = cloudUser?.id || cloudOwnerOptions[0] || null;
   }
+  cloudOwnersLastError = nextOwnersLastError;
   persistOwnerId(cloudOwnerId);
 
   renderOwnerSelect();

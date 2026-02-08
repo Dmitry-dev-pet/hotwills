@@ -69,9 +69,10 @@ async function refreshSimilarModelsHints(rows) {
 }
 
 async function refreshCloudData() {
+  let ownersRefreshPromise = null;
   try {
     if (typeof refreshCloudOwners === 'function') {
-      await refreshCloudOwners();
+      ownersRefreshPromise = refreshCloudOwners().catch(() => null);
       if (typeof refreshCloudUi === 'function') refreshCloudUi();
     }
     const rows = await tryLoadDataJson();
@@ -83,6 +84,11 @@ async function refreshCloudData() {
     loadData(rows);
     refreshSimilarModelsHints(rows);
     updateToolbarVisibility(currentMode);
+    if (ownersRefreshPromise) {
+      ownersRefreshPromise.then(() => {
+        if (typeof refreshCloudUi === 'function') refreshCloudUi();
+      });
+    }
     return { ok: true, count: rows.length };
   } catch (e) {
     loadData([]);
