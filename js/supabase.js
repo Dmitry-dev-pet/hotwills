@@ -269,7 +269,7 @@ async function fetchSimilarModelsByCodes(codes, ownerId) {
       const to = from + pageSize - 1;
       const { data, error } = await cloudClient
         .from(CLOUD.TABLE)
-        .select('created_by,code,name,image_file')
+        .select('created_by,code,name,year,image_file,source_link')
         .in('code', chunk)
         .not('created_by', 'is', null)
         .neq('created_by', targetOwnerId)
@@ -315,9 +315,11 @@ async function fetchSimilarModelsByCodes(codes, ownerId) {
       email,
       code,
       name: String(row?.name || '').trim(),
-      image: String(row?.image_file || '').trim()
+      year: String(row?.year || '').trim(),
+      image: String(row?.image_file || '').trim(),
+      link: String(row?.source_link || '').trim()
     };
-    const dedupeKey = `${ownerId}|${code}|${item.name}|${item.image}`;
+    const dedupeKey = `${ownerId}|${code}|${item.name}|${item.year}|${item.image}|${item.link}`;
     if (dedupe.has(dedupeKey)) return;
     dedupe.add(dedupeKey);
     const current = out.get(key) || [];

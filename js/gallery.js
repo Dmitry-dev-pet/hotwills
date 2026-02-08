@@ -116,11 +116,21 @@ function showGalleryDetail(index) {
   const similarRows = getSimilarRowsByCode(item.code);
   const similarHtml = similarRows.length > 0
     ? `
-      <dt>${t('similarModelsTitle')}</dt>
+      <dt>${t('similarModelsTitle', { n: similarRows.length })}</dt>
       <dd>
-        <ul class="modal-similar-list">
-          ${similarRows.map((row) => `<li><span class="modal-similar-email">${escapeHtml(row.email || row.ownerId || '—')}</span> - ${escapeHtml(row.name || '—')} (${escapeHtml(row.code || '—')})</li>`).join('')}
-        </ul>
+        <div class="modal-similar-grid">
+          ${similarRows.map((row) => `
+            <article class="modal-similar-card">
+              <img class="modal-similar-photo" src="${imgPath(row.image || '')}" alt="${escapeHtml(row.name || '')}" loading="lazy">
+              <div class="modal-similar-body">
+                <div class="modal-similar-email">${escapeHtml(row.email || row.ownerId || '—')}</div>
+                <div class="modal-similar-name">${escapeHtml(row.name || '—')}</div>
+                <div class="modal-similar-meta">${escapeHtml(row.code || '—')} - ${escapeHtml(row.year || '—')}</div>
+                ${row.link ? `<a class="modal-similar-link" href="${escapeHtml(row.link)}" target="_blank" rel="noopener">${t('linkWord')}</a>` : ''}
+              </div>
+            </article>
+          `).join('')}
+        </div>
       </dd>
     `
     : '';
