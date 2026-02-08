@@ -10,8 +10,28 @@ UI modes:
 - Catalog
 - Editor
 - Infographic
+- Statistics (modal from header)
 
 The UI is based on the original yesteryear layout, with cloud auth/sync added.
+
+Current header UX:
+- Large header with quick metrics (models, codes, years, overlaps)
+- `Statistics` button opens detailed analytics and catalog comparison
+- Account menu (`👤`) includes auth actions and catalog owner selector
+
+## How to use (current flow)
+
+1. Sign in with Google from account menu (`👤 -> Авторизация`).
+2. Load a local import folder with `Загрузить папку`.
+3. Edit models in `Editor` mode if needed.
+4. Save with `Сохранить в облако`.
+5. Switch owner in `Каталог` selector to browse another user's catalog (always read-only for non-owner catalogs).
+
+Important cloud behavior:
+- `Сохранить в облако` performs a full replace of your catalog rows in Supabase.
+- Old rows are deleted and replaced by current editor state.
+- Stale files in your user storage folder (`model-images/<your-uid>/...`) are also cleaned up.
+- Button/status show save progress while preparing/uploading images.
 
 ## 1. Supabase setup
 
@@ -59,6 +79,12 @@ This saves:
 - `/Users/dmitry/Project/hotwills/data/source/images/*`
 - `/Users/dmitry/Project/hotwills/data/source/manifest.json`
 
+Folder import expectations in UI (`Загрузить папку`):
+- Folder must include one JSON file (preferably `data.json`).
+- Any image files in the selected folder tree are imported into local IndexedDB.
+- JSON `image` values should reference filenames (example: `46.webp` or `2.jpg`).
+- Filenames should be unique; path segments are not used as identity keys.
+
 ## 4. Import into Supabase
 
 Use service role key only from terminal (never in frontend):
@@ -68,6 +94,32 @@ SUPABASE_URL="https://YOUR_PROJECT_REF.supabase.co" \
 SUPABASE_SERVICE_ROLE_KEY="YOUR_SERVICE_ROLE_KEY" \
 npm run upload:supabase
 ```
+
+## Local Nano Banana stylization (via cliproxyapi)
+
+Build a new local import pack (`data/stylized-pack`) in the same format (`data.json` + `images/*`):
+
+```bash
+CLIPROXY_KEY="YOUR_CLIPROXY_KEY" \
+CLIPROXY_MODEL="nanobanana" \
+npm run stylize:nanobanana
+```
+
+Optional flags:
+
+```bash
+npm run stylize:nanobanana -- \
+  --pack-dir data/source \
+  --out-dir data/stylized-pack \
+  --concurrency 2 \
+  --limit 20
+```
+
+Notes:
+- Endpoint defaults to `http://127.0.0.1:8317` (override with `CLIPROXY_ENDPOINT`).
+- If stylization fails for an image, original file is copied by default (can be disabled with `--no-fallback`).
+- Import the resulting folder in UI with `Загрузить папку`.
+- Typical resulting pack format: `<pack>/data.json` and `<pack>/images/*`.
 
 ## 5. Run locally (optional)
 
@@ -110,8 +162,17 @@ If variables are not set, deploy still works but uses committed `config.js`.
 
 ## Multiuser model
 
-- Each authenticated user can read any catalog rows (for shared viewing).
-- Each authenticated user can update/delete only own rows.
+- Catalog rows are public-read (`SELECT`) by RLS policy.
+- Only authenticated owner can insert/update/delete own rows (`created_by = auth.uid()`).
 - New rows are inserted with `created_by = auth.uid()`.
 - Storage object keys are user-scoped (`<auth.uid()>/...`).
-- Another user's catalog can be opened from the account menu (`Каталог` selector) by email, even without login, always in read-only mode.
+- Owner labels in UI come from `public.user_profiles` (`email`).
+- Another user's catalog can be opened from account menu (`Каталог` selector) and is always read-only in the app.
+- Stats modal supports comparison with another owner from the same owner list.
+
+## Realtime note
+
+If you see browser warning like:
+- `WebSocket connection ... realtime/v1/websocket ... closed before the connection is established`
+
+This usually means Realtime is disabled or blocked in current environment. Core catalog load/save still works without Realtime subscription.
