@@ -149,7 +149,7 @@ async function loadLocalImagesFromStore() {
   return { count: localImageUrls.size };
 }
 
-async function saveImagesToLocalStore(fileList) {
+async function saveImagesToLocalStore(fileList, options = {}) {
   const files = Array.from(fileList || []).filter((f) => f && f.name);
   if (!files.length) return { saved: 0 };
   if (!window.indexedDB) throw new Error('indexedDB is not available');
@@ -158,6 +158,9 @@ async function saveImagesToLocalStore(fileList) {
   await new Promise((resolve, reject) => {
     const tx = db.transaction(LOCAL_IMAGES_STORE, 'readwrite');
     const store = tx.objectStore(LOCAL_IMAGES_STORE);
+    if (options.replace === true) {
+      store.clear();
+    }
     files.forEach((file) => {
       store.put({
         name: file.name,
@@ -345,7 +348,11 @@ function tryLoadDataJson() {
     && isCloudReady()
     && hasCloudOwner
   ) {
-    return fetchModelsFromCloud(getCloudOwnerId()).catch(() => fetchLocal());
+    const allowLocalFallback = Boolean(window.HOTWILLS_CONFIG?.allowLocalFallbackWhenCloudError);
+    return fetchModelsFromCloud(getCloudOwnerId()).catch((err) => {
+      if (allowLocalFallback) return fetchLocal();
+      throw err;
+    });
   }
   return fetchLocal();
 }

@@ -15,6 +15,7 @@ let cloudOwnerId = null;
 let cloudOwnerOptions = [];
 let cloudOwnersLastError = '';
 let cloudOwnerEmailById = {};
+const CLOUD_OWNER_STORAGE_KEY = 'mbx_cloud_owner_id';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -27,8 +28,31 @@ function normalizeEmail(value) {
   return (value || '').trim().toLowerCase();
 }
 
+function loadPersistedOwnerId() {
+  try {
+    return normalizeUserId(localStorage.getItem(CLOUD_OWNER_STORAGE_KEY) || '');
+  } catch (e) {
+    return '';
+  }
+}
+
+function persistOwnerId(ownerId) {
+  try {
+    const normalized = normalizeUserId(ownerId);
+    if (normalized) localStorage.setItem(CLOUD_OWNER_STORAGE_KEY, normalized);
+    else localStorage.removeItem(CLOUD_OWNER_STORAGE_KEY);
+  } catch (e) {
+    // ignore storage errors
+  }
+}
+
 function getCloudOwnerId() {
   if (cloudOwnerId) return cloudOwnerId;
+  const persisted = loadPersistedOwnerId();
+  if (persisted) {
+    cloudOwnerId = persisted;
+    return cloudOwnerId;
+  }
   return cloudUser?.id || null;
 }
 
@@ -143,24 +167,48 @@ async function ensureUserScopedImagePath(imagePath, userId) {
     }
   }
 
-  const scopedBlob = await fetchBlobByUrl(getStoragePublicUrl(scopedPath));
-  if (scopedBlob) return { ok: true, path: scopedPath };
-
-  // 1) try existing object from storage root key (legacy import)
-  // 2) try browser local image storage (folder import)
-  // 3) fallback to local bundled image under /img
-  const fromStorage = await fetchBlobByUrl(getStoragePublicUrl(raw));
-  const fromIndexedDb = fromStorage
-    ? null
-    : (typeof getLocalImageBlobByName === 'function' ? await getLocalImageBlobByName(raw) : null);
+  // Strict replace behavior:
+  // use local imported images (IndexedDB) first, then bundled /img fallback.
+  // Do not silently reuse old cloud objects for bare names.
   const imgDir = (typeof CONFIG !== 'undefined' && CONFIG && CONFIG.IMG_DIR) ? CONFIG.IMG_DIR : 'img/';
-  const fromLocal = (fromStorage || fromIndexedDb) ? null : await fetchBlobByUrl(imgDir + encodeURIComponent(raw));
-  const blob = fromStorage || fromIndexedDb || fromLocal;
+  const fromLocal = await fetchBlobByUrl(imgDir + encodeURIComponent(raw));
+  const blob = fromLocal;
   if (!blob) {
-    return { ok: false, error: `image not found: ${raw}` };
+    return { ok: false, error: `image not found locally: ${raw}` };
   }
 
   return uploadScoped(blob);
+}
+
+async function listStoragePathsRecursive(bucket, prefix) {
+  const basePrefix = String(prefix || '').replace(/^\/+|\/+$/g, '');
+  const out = [];
+  const queue = [basePrefix];
+  const pageLimit = 100;
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    for (let offset = 0; ; offset += pageLimit) {
+      const { data: listPage, error: listError } = await cloudClient.storage
+        .from(bucket)
+        .list(current, { limit: pageLimit, offset, sortBy: { column: 'name', order: 'asc' } });
+      if (listError) return { ok: false, error: listError };
+
+      const rows = Array.isArray(listPage) ? listPage : [];
+      rows.forEach((entry) => {
+        const name = (entry && entry.name) ? String(entry.name) : '';
+        if (!name) return;
+        const fullPath = current ? `${current}/${name}` : name;
+        const isFolder = entry.id == null || entry.metadata == null;
+        if (isFolder) queue.push(fullPath);
+        else out.push(fullPath);
+      });
+
+      if (rows.length < pageLimit) break;
+    }
+  }
+
+  return { ok: true, paths: out };
 }
 
 function getImageUrlFromCloud(path) {
@@ -174,22 +222,40 @@ async function fetchModelsFromCloud(ownerId) {
   if (!cloudClient) throw new Error('Cloud client not initialized');
   const targetOwnerId = normalizeUserId(ownerId) || getCloudOwnerId();
   if (!targetOwnerId) throw new Error('No target owner selected');
-  const { data, error } = await cloudClient
-    .from(CLOUD.TABLE)
-    .select('id,name,year,code,image_file,source_link,created_by,updated_at')
-    .eq('created_by', targetOwnerId)
-    .order('code', { ascending: true });
-
-  if (error) throw error;
-  return (data || []).map(mapRowToModel);
+  const out = [];
+  const pageSize = 1000;
+  for (let from = 0; ; from += pageSize) {
+    const to = from + pageSize - 1;
+    const { data, error } = await cloudClient
+      .from(CLOUD.TABLE)
+      .select('id,name,year,code,image_file,source_link,created_by,updated_at')
+      .eq('created_by', targetOwnerId)
+      .order('code', { ascending: true })
+      .range(from, to);
+    if (error) throw error;
+    const rows = Array.isArray(data) ? data : [];
+    out.push(...rows);
+    if (rows.length < pageSize) break;
+  }
+  return out.map(mapRowToModel);
 }
 
-async function saveModelsToCloud(models) {
+async function saveModelsToCloud(models, options = {}) {
   if (!cloudClient) return { ok: false, error: new Error('Cloud client not initialized') };
   if (!cloudUser) return { ok: false, error: new Error('Not authenticated') };
   if (isCloudReadOnlyView()) return { ok: false, error: new Error(t('readOnlyEditorDisabled')) };
 
-  const prepared = [];
+  const onProgress = typeof options.onProgress === 'function' ? options.onProgress : null;
+  const reportProgress = (stage, extra = {}) => {
+    if (!onProgress) return;
+    try {
+      onProgress({ stage, ...extra });
+    } catch (e) {
+      // ignore progress callback failures
+    }
+  };
+
+  const candidates = [];
   for (const model of (models || [])) {
     const base = {
       name: (model.name || '').trim(),
@@ -198,8 +264,17 @@ async function saveModelsToCloud(models) {
       image: (model.image || '').trim(),
       link: (model.link || '').trim()
     };
-    if (!base.name || !base.year || !base.code || !base.image) continue;
+    if (!base.name || !base.year || !base.code || !base.image) {
+      continue;
+    }
+    candidates.push(base);
+  }
 
+  reportProgress('prepare_start', { current: 0, total: candidates.length });
+
+  const prepared = [];
+  for (let i = 0; i < candidates.length; i += 1) {
+    const base = candidates[i];
     const resolved = await ensureUserScopedImagePath(base.image, cloudUser.id);
     if (!resolved.ok) {
       return { ok: false, error: new Error(`Image prepare failed for "${base.image}": ${resolved.error}`) };
@@ -209,18 +284,125 @@ async function saveModelsToCloud(models) {
       ...base,
       image: resolved.path
     });
+    reportProgress('prepare', { current: i + 1, total: candidates.length, image: base.image });
   }
 
   const payload = prepared.map((model) => mapModelToRow(model, cloudUser.id));
 
   if (payload.length === 0) return { ok: false, error: new Error('No valid rows to save') };
 
+  const seenImages = new Set();
+  for (const row of payload) {
+    const key = String(row?.image_file || '').trim();
+    if (!key) continue;
+    if (seenImages.has(key)) {
+      return { ok: false, error: new Error(`Duplicate image in payload: ${key}`) };
+    }
+    seenImages.add(key);
+  }
+
+  // Keep cloud catalog equal to current editor state:
+  // replace all user rows with current payload.
+  reportProgress('cleanup_scan', { current: 0, total: payload.length });
+  const existingRows = [];
+  const selectPageSize = 1000;
+  for (let from = 0; ; from += selectPageSize) {
+    const to = from + selectPageSize - 1;
+    const { data: pageRows, error: existingRowsError } = await cloudClient
+      .from(CLOUD.TABLE)
+      .select('id,image_file')
+      .eq('created_by', cloudUser.id)
+      .order('id', { ascending: true })
+      .range(from, to);
+    if (existingRowsError) return { ok: false, error: existingRowsError };
+    const rows = Array.isArray(pageRows) ? pageRows : [];
+    existingRows.push(...rows);
+    if (rows.length < selectPageSize) break;
+  }
+
+  const keepImages = new Set(payload.map((row) => row.image_file).filter(Boolean));
+  const staleRows = (existingRows || [])
+    .filter((row) => row?.id && row?.image_file && !keepImages.has(row.image_file));
+  const existingIds = (existingRows || []).map((row) => row.id).filter(Boolean);
+
+  // Remove stale storage objects referenced by stale rows first.
+  // This supports legacy non-user-scoped paths if storage delete policy allows it.
+  const staleStorageByRows = Array.from(new Set(staleRows.map((row) => row.image_file).filter(Boolean)));
+
+  const chunkSize = 200;
+  for (let i = 0; i < existingIds.length; i += chunkSize) {
+    const chunk = existingIds.slice(i, i + chunkSize);
+    const { error: deleteError } = await cloudClient
+      .from(CLOUD.TABLE)
+      .delete()
+      .in('id', chunk);
+    if (deleteError) return { ok: false, error: deleteError };
+    reportProgress('cleanup', { current: Math.min(i + chunk.length, existingIds.length), total: existingIds.length });
+  }
+
+  reportProgress('upsert', { current: payload.length, total: payload.length });
   const { error } = await cloudClient
     .from(CLOUD.TABLE)
     .upsert(payload, { onConflict: 'image_file' });
-
   if (error) return { ok: false, error };
-  return { ok: true };
+
+  reportProgress('cleanup_storage_scan', { current: 0, total: staleStorageByRows.length });
+  const removeChunkSize = 100;
+  for (let i = 0; i < staleStorageByRows.length; i += removeChunkSize) {
+    const chunk = staleStorageByRows.slice(i, i + removeChunkSize);
+    const { error: removeError } = await cloudClient.storage
+      .from(CLOUD.IMAGE_BUCKET)
+      .remove(chunk);
+    if (removeError) return { ok: false, error: removeError };
+    reportProgress('cleanup_storage', {
+      current: Math.min(i + chunk.length, staleStorageByRows.length),
+      total: staleStorageByRows.length
+    });
+  }
+
+  // Remove stale files from user storage folder as well.
+  const userPrefix = `${cloudUser.id}/`;
+  const keepUserScoped = new Set(
+    Array.from(keepImages).filter((p) => typeof p === 'string' && p.startsWith(userPrefix))
+  );
+
+  const listedResult = await listStoragePathsRecursive(CLOUD.IMAGE_BUCKET, cloudUser.id);
+  if (!listedResult.ok) return { ok: false, error: listedResult.error };
+  const listedPaths = Array.from(new Set((listedResult.paths || []).filter(Boolean)));
+
+  const staleStoragePaths = listedPaths.filter((p) => !keepUserScoped.has(p));
+  reportProgress('cleanup_storage_scan', { current: 0, total: staleStoragePaths.length });
+
+  for (let i = 0; i < staleStoragePaths.length; i += removeChunkSize) {
+    const chunk = staleStoragePaths.slice(i, i + removeChunkSize);
+    const { error: removeError } = await cloudClient.storage
+      .from(CLOUD.IMAGE_BUCKET)
+      .remove(chunk);
+    if (removeError) return { ok: false, error: removeError };
+    reportProgress('cleanup_storage', {
+      current: Math.min(i + chunk.length, staleStoragePaths.length),
+      total: staleStoragePaths.length
+    });
+  }
+
+  const { count: finalCount, error: finalCountError } = await cloudClient
+    .from(CLOUD.TABLE)
+    .select('id', { count: 'exact', head: true })
+    .eq('created_by', cloudUser.id);
+  if (finalCountError) return { ok: false, error: finalCountError };
+  if (typeof finalCount === 'number' && finalCount !== payload.length) {
+    return {
+      ok: false,
+      error: new Error(`Cloud row count mismatch after save: expected ${payload.length}, got ${finalCount}`)
+    };
+  }
+
+  reportProgress('done', { current: payload.length, total: payload.length });
+  return {
+    ok: true,
+    savedCount: payload.length,
+    finalCount: (typeof finalCount === 'number') ? finalCount : payload.length
+  };
 }
 
 function sanitizeFileName(name) {
@@ -350,6 +532,7 @@ async function refreshOwnerOptions() {
   if (!cloudOwnerId || !cloudOwnerOptions.includes(cloudOwnerId)) {
     cloudOwnerId = cloudUser?.id || cloudOwnerOptions[0] || null;
   }
+  persistOwnerId(cloudOwnerId);
 
   renderOwnerSelect();
 }
@@ -417,6 +600,7 @@ function setAuthUi() {
       const nextOwnerId = normalizeUserId(e.target.value);
       if (!nextOwnerId) return;
       cloudOwnerId = nextOwnerId;
+      persistOwnerId(cloudOwnerId);
       startCloudRealtime();
       await triggerCloudRefresh();
       setAuthUi();
@@ -476,6 +660,10 @@ function startCloudRealtime() {
 async function syncUserFromSession() {
   const { data } = await cloudClient.auth.getSession();
   cloudUser = data?.session?.user || null;
+  if (!normalizeUserId(cloudOwnerId)) {
+    const persistedOwnerId = loadPersistedOwnerId();
+    if (persistedOwnerId) cloudOwnerId = persistedOwnerId;
+  }
   await ensureCurrentUserProfile();
   if (cloudUser && !normalizeUserId(cloudOwnerId)) {
     cloudOwnerId = cloudUser.id;

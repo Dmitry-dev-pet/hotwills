@@ -45,9 +45,14 @@ async function refreshCloudData() {
     }
     loadData(rows);
     updateToolbarVisibility(currentMode);
+    return { ok: true, count: rows.length };
   } catch (e) {
     loadData([]);
+    if (typeof cloudStatus === 'function') {
+      cloudStatus(`${t('cloudLoadFailed')}: ${formatCloudError(e)}`, true);
+    }
     updateToolbarVisibility(currentMode);
+    return { ok: false, count: 0, error: e };
   }
 }
 
@@ -236,7 +241,7 @@ document.getElementById('folderInput').addEventListener('change', async (e) => {
   try {
     let storedImages = 0;
     if (imageFiles.length > 0 && typeof saveImagesToLocalStore === 'function') {
-      const saveResult = await saveImagesToLocalStore(imageFiles);
+      const saveResult = await saveImagesToLocalStore(imageFiles, { replace: true });
       storedImages = saveResult?.saved || 0;
     }
 
@@ -320,6 +325,15 @@ document.getElementById('saveBtn').addEventListener('click', () => {
 });
 
 document.getElementById('cloudSaveBtn').addEventListener('click', async () => {
+  const cloudSaveBtn = document.getElementById('cloudSaveBtn');
+  const defaultBtnText = t('saveCloud');
+  const setCloudSaveUi = (text, busy) => {
+    if (cloudSaveBtn) {
+      cloudSaveBtn.textContent = text || defaultBtnText;
+      cloudSaveBtn.disabled = Boolean(busy);
+    }
+  };
+
   if (isReadOnlyCloudView()) {
     showToast(t('readOnlyEditorDisabled'));
     return;
@@ -328,8 +342,44 @@ document.getElementById('cloudSaveBtn').addEventListener('click', async () => {
     showToast(t('cloudNotConfigured'));
     return;
   }
+
   const rows = collectFromDOM();
-  const result = await saveModelsToCloud(rows);
+  setCloudSaveUi(t('cloudSaveWriting'), true);
+  if (typeof cloudStatus === 'function') cloudStatus(t('cloudSaveWriting'), false);
+
+  let result;
+  try {
+    result = await saveModelsToCloud(rows, {
+      onProgress: (progress) => {
+        if (!progress) return;
+        if (progress.stage === 'prepare_start' || progress.stage === 'prepare') {
+          const text = t('cloudSaveProgress', { current: progress.current || 0, total: progress.total || 0 });
+          setCloudSaveUi(text, true);
+          if (typeof cloudStatus === 'function') cloudStatus(text, false);
+        } else if (
+          progress.stage === 'upsert'
+          || progress.stage === 'cleanup_scan'
+          || progress.stage === 'cleanup'
+          || progress.stage === 'cleanup_storage_scan'
+          || progress.stage === 'cleanup_storage'
+        ) {
+          const text = t('cloudSaveWriting');
+          setCloudSaveUi(text, true);
+          if (typeof cloudStatus === 'function') cloudStatus(text, false);
+        } else if (progress.stage === 'done') {
+          const text = t('cloudSaveDoneShort');
+          setCloudSaveUi(text, true);
+          if (typeof cloudStatus === 'function') cloudStatus(text, false);
+        }
+      }
+    });
+  } catch (e) {
+    result = { ok: false, error: e };
+  } finally {
+    setCloudSaveUi(defaultBtnText, false);
+    updateToolbarVisibility(currentMode);
+  }
+
   if (!result.ok) {
     const msg = t('cloudSaveFailed') + ': ' + formatCloudError(result.error);
     console.error('cloudSave failed', result.error);
@@ -338,13 +388,19 @@ document.getElementById('cloudSaveBtn').addEventListener('click', async () => {
     alert(msg);
     return;
   }
-  loadData(rows);
-  showToast(t('cloudSaved'));
+  const refreshed = await refreshCloudData();
+  if (refreshed && refreshed.ok) {
+    showToast(t('cloudSavedCount', { n: refreshed.count }));
+  } else {
+    loadData(rows);
+    showToast(t('cloudSaved'));
+  }
 });
 
 document.getElementById('cloudReloadBtn').addEventListener('click', async () => {
-  await refreshCloudData();
-  showToast(t('cloudReloaded'));
+  const refreshed = await refreshCloudData();
+  if (refreshed && refreshed.ok) showToast(t('cloudReloadedCount', { n: refreshed.count }));
+  else showToast(t('cloudReloaded'));
 });
 
 document.getElementById('modeSelect').addEventListener('change', (e) => {
