@@ -329,15 +329,15 @@ async function saveModelsToCloud(models, options = {}) {
   // This supports legacy non-user-scoped paths if storage delete policy allows it.
   const staleStorageByRows = Array.from(new Set(staleRows.map((row) => row.image_file).filter(Boolean)));
 
-  const chunkSize = 200;
-  for (let i = 0; i < existingIds.length; i += chunkSize) {
-    const chunk = existingIds.slice(i, i + chunkSize);
+  if (existingIds.length > 0) {
     const { error: deleteError } = await cloudClient
       .from(CLOUD.TABLE)
       .delete()
-      .in('id', chunk);
+      .eq('created_by', cloudUser.id);
     if (deleteError) return { ok: false, error: deleteError };
-    reportProgress('cleanup', { current: Math.min(i + chunk.length, existingIds.length), total: existingIds.length });
+    reportProgress('cleanup', { current: existingIds.length, total: existingIds.length });
+  } else {
+    reportProgress('cleanup', { current: 0, total: 0 });
   }
 
   reportProgress('upsert', { current: payload.length, total: payload.length });
