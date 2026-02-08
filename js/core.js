@@ -176,6 +176,50 @@ async function saveImagesToLocalStore(fileList) {
   return { saved: files.length };
 }
 
+async function dataUrlToBlob(dataUrl) {
+  const response = await fetch(dataUrl);
+  if (!response.ok) throw new Error('Failed to decode embedded image');
+  return response.blob();
+}
+
+async function saveImageMapToLocalStore(imageMap) {
+  if (!imageMap || typeof imageMap !== 'object') return { saved: 0 };
+  if (!window.indexedDB) throw new Error('indexedDB is not available');
+
+  const entries = Object.entries(imageMap).filter(([name, value]) =>
+    Boolean(name) && typeof value === 'string' && value.startsWith('data:')
+  );
+  if (!entries.length) return { saved: 0 };
+
+  const db = await openLocalImagesDb();
+  await new Promise(async (resolve, reject) => {
+    const tx = db.transaction(LOCAL_IMAGES_STORE, 'readwrite');
+    const store = tx.objectStore(LOCAL_IMAGES_STORE);
+    try {
+      for (const [name, dataUrl] of entries) {
+        const blob = await dataUrlToBlob(dataUrl);
+        store.put({
+          name,
+          blob,
+          type: blob.type || '',
+          updatedAt: Date.now()
+        });
+      }
+    } catch (e) {
+      tx.abort();
+      reject(e);
+      return;
+    }
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error || new Error('Failed to save embedded images'));
+    tx.onabort = () => reject(tx.error || new Error('Embedded image save aborted'));
+  });
+  db.close();
+
+  await loadLocalImagesFromStore();
+  return { saved: entries.length };
+}
+
 function getLocalImageUrl(filename) {
   const key = String(filename || '').trim();
   if (!key) return '';
@@ -277,4 +321,5 @@ function showEmptyWithLoadButton(container, attachClick) {
 }
 
 window.saveImagesToLocalStore = saveImagesToLocalStore;
+window.saveImageMapToLocalStore = saveImageMapToLocalStore;
 window.initLocalImages = initLocalImages;

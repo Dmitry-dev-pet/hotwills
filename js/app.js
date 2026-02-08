@@ -189,13 +189,28 @@ document.getElementById('fileInput').addEventListener('change', e => {
   const file = e.target.files[0];
   if (!file) return;
   const r = new FileReader();
-  r.onload = () => {
+  r.onload = async () => {
     try {
       let text = String(r.result).replace(/^\uFEFF/, '').trim();
       const parsed = JSON.parse(text);
       const arr = Array.isArray(parsed) ? parsed : (parsed?.items ?? parsed?.data ?? []);
+      let savedImages = 0;
+      if (
+        parsed
+        && typeof parsed === 'object'
+        && !Array.isArray(parsed)
+        && parsed.images
+        && typeof saveImageMapToLocalStore === 'function'
+      ) {
+        const result = await saveImageMapToLocalStore(parsed.images);
+        savedImages = result?.saved || 0;
+      }
       loadData(Array.isArray(arr) ? arr : []);
-      showToast(t('jsonLoaded'));
+      if (savedImages > 0) {
+        showToast(`${t('jsonLoaded')} · ${t('imagesLoaded', { n: savedImages })}`);
+      } else {
+        showToast(t('jsonLoaded'));
+      }
     } catch (err) {
       alert(t('errorInvalidJson') + '\n' + (err.message || ''));
     }
