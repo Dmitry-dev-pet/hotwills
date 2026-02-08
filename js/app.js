@@ -61,7 +61,7 @@ function updateToolbarVisibility(mode) {
   document.querySelectorAll('.mode-editor').forEach(el => el.style.display = (effectiveMode === 'editor' && !readOnly) ? '' : 'none');
   document.querySelectorAll('.mode-gallery').forEach(el => el.style.display = (effectiveMode === 'gallery' || effectiveMode === 'infographic') ? '' : 'none');
 
-  const lockIds = ['loadFolderBtn', 'loadImagesBtn', 'copyBtn', 'saveBtn', 'cloudSaveBtn', 'addPhotoBtn'];
+  const lockIds = ['loadFolderBtn', 'copyBtn', 'saveBtn', 'cloudSaveBtn', 'addPhotoBtn'];
   lockIds.forEach((id) => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -250,29 +250,6 @@ document.getElementById('folderInput').addEventListener('change', async (e) => {
     alert(t('errorInvalidJson') + '\n' + ((err && err.message) || ''));
   }
 
-  e.target.value = '';
-});
-
-document.getElementById('loadImagesBtn').addEventListener('click', () => {
-  document.getElementById('imagesInput').click();
-});
-
-document.getElementById('imagesInput').addEventListener('change', async (e) => {
-  const files = e.target.files;
-  if (!files || files.length === 0) return;
-  if (typeof saveImagesToLocalStore !== 'function') {
-    showToast(t('localImagesUnsupported'));
-    e.target.value = '';
-    return;
-  }
-
-  try {
-    const result = await saveImagesToLocalStore(files);
-    showToast(t('imagesLoaded', { n: result.saved || 0 }));
-    renderCurrent();
-  } catch (err) {
-    showToast((err && err.message) ? err.message : t('localImagesUnsupported'));
-  }
   e.target.value = '';
 });
 
