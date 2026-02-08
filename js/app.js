@@ -343,7 +343,15 @@ document.getElementById('cloudSaveBtn').addEventListener('click', async () => {
     return;
   }
 
-  const rows = collectFromDOM();
+  const rows = Array.isArray(data)
+    ? data.map((row) => ({
+      name: (row?.name || '').trim(),
+      year: (row?.year || '').trim(),
+      code: (row?.code || '').trim(),
+      image: (row?.image || '').trim(),
+      link: (row?.link || '').trim()
+    }))
+    : collectFromDOM();
   setCloudSaveUi(t('cloudSaveWriting'), true);
   if (typeof cloudStatus === 'function') cloudStatus(t('cloudSaveWriting'), false);
 
