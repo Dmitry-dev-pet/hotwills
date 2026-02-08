@@ -313,20 +313,21 @@ async function fetchSimilarModelsByCodes(codes, ownerId) {
     const year = String(row?.year || '').trim();
     const image = String(row?.image_file || '').trim();
     const link = String(row?.source_link || '').trim();
-    const modelKey = `${ownerId}|${codeKey}|${name.toLowerCase()}`;
+    const modelKey = `${ownerId}|${codeKey}`;
     let item = groupedByModel.get(modelKey);
     if (!item) {
       item = {
         ownerId,
         email,
         code,
-        name,
+        names: [],
         years: [],
         image: image || '',
         link: link || ''
       };
       groupedByModel.set(modelKey, item);
     }
+    if (name && !item.names.includes(name)) item.names.push(name);
     if (year && !item.years.includes(year)) item.years.push(year);
     if (!item.image && image) item.image = image;
     if (!item.link && link) item.link = link;
@@ -340,7 +341,7 @@ async function fetchSimilarModelsByCodes(codes, ownerId) {
       ownerId: item.ownerId,
       email: item.email,
       code: item.code,
-      name: item.name,
+      name: item.names.join(' / '),
       year: item.years.join(', '),
       image: item.image,
       link: item.link
