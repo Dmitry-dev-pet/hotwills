@@ -66,6 +66,12 @@ function isCloudConfigured() {
   return Boolean(cfg.supabaseUrl && cfg.supabaseAnonKey && window.supabase && window.supabase.createClient);
 }
 
+function isRealtimeEnabled() {
+  const cfg = window.HOTWILLS_CONFIG || {};
+  const flag = cfg.enableRealtime;
+  return flag === true || flag === 'true' || flag === 1;
+}
+
 function cloudStatus(message, isError) {
   const statusEl = document.getElementById('authStatus');
   if (!statusEl) return;
@@ -451,7 +457,7 @@ function stopCloudRealtime() {
 
 function startCloudRealtime() {
   stopCloudRealtime();
-  if (!cloudClient || !cloudUser) return;
+  if (!cloudClient || !cloudUser || !isRealtimeEnabled()) return;
   const ownerId = getCloudOwnerId();
   if (!ownerId) return;
   cloudRealtime = cloudClient
