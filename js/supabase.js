@@ -434,7 +434,7 @@ function stopCloudRealtime() {
 
 function startCloudRealtime() {
   stopCloudRealtime();
-  if (!cloudClient) return;
+  if (!cloudClient || !cloudUser) return;
   const ownerId = getCloudOwnerId();
   if (!ownerId) return;
   cloudRealtime = cloudClient
